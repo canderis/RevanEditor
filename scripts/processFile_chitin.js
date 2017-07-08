@@ -1,10 +1,16 @@
-const {dialog} = require('electron').remote
+const electron = require('electron')
+const remote = electron.remote
+
+const dialog = remote.dialog
+const fs = require('fs')
+
 function openFile() {
 	console.log('here');
 	dialog.showOpenDialog({ properties: ['openDirectory'] }, function (fileNames) {
 		console.log(fileNames);
 
 		let directory = fileNames[0];
+		console.log(fs);
 		fs.readdir(directory, function (err, data) {
 			if (err) return console.log(err)
 				console.log(data);
