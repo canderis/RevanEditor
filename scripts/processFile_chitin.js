@@ -2,7 +2,13 @@ const electron = require('electron')
 const remote = electron.remote
 
 const dialog = remote.dialog
-const fs = require('fs')
+var Promise = require("bluebird");
+var fs = Promise.promisifyAll(require('fs'),{
+	filter: function(name) {
+		return name !== "read";
+	}
+});
+fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
 
 function openFile() {
 	console.log('here');
@@ -41,41 +47,86 @@ function openFile() {
 }
 
 
-let chitinHeader = {
-	number_of_bif_files: '',
-	number_of_entries_in_chitin_key: '',
-	offset_to_table_of_files: '',
-	offset_to_table_of_keys: '',
-	build_year: '',
-	build_day: '',
-	header_length: 60
-};
+// let chitinHeader = {
+// 	number_of_bif_files: '',
+// 	number_of_entries_in_chitin_key: '',
+// 	offset_to_table_of_files: '',
+// 	offset_to_table_of_keys: '',
+// 	build_year: '',
+// 	build_day: '',
+// 	header_length: 60
+// };
 let bifFiles = [];
 
 function parseChitinKey (directory) {
-	fs.open(directory + '/chitin.key', 'r', function postOpen (errOpen, fd) {
-		readChitinHeader(fd);
-	});
+	// fs.open(directory + '/chitin.key', 'r', function postOpen (errOpen, fd) {
+	// 	readChitinHeader(fd);
+	// });
+
+	fs.openAsync(directory + '/chitin.key', 'r')
+		.then(readChitinHeader)
+		.then(parseBifFileDataInChitin)
+		.then(parseTableOfKeys)
+		.then(function(){
+			console.log(bifFiles);
+		});
 }
 
+let chitinHeader;
+
 function readChitinHeader (fd) {
-	fs.read(fd, new Buffer(chitinHeader.header_length), 0, chitinHeader.header_length, 0, function readKeyHeader (errRead, bytesRead, buffer) {
-		chitinHeader.number_of_bif_files = buffer.readUInt32LE(8)
-		chitinHeader.number_of_entries_in_chitin_key = buffer.readUInt32LE(12)
-		chitinHeader.offset_to_table_of_files = buffer.readUInt32LE(16)
-		chitinHeader.offset_to_table_of_keys = buffer.readUInt32LE(20)
-		chitinHeader.build_year = buffer.readUInt32LE(24)
-		chitinHeader.build_day = buffer.readUInt32LE(28)
+	// let chitinHeader = {
+	// 	number_of_bif_files: '',
+	// 	number_of_entries_in_chitin_key: '',
+	// 	offset_to_table_of_files: '',
+	// 	offset_to_table_of_keys: '',
+	// 	build_year: '',
+	// 	build_day: '',
+	// 	header_length: 60
+	// };
+
+	return fs.readAsync(fd, new Buffer(60), 0, 60, 0 )
+		.then( function(args){
+			var bytesRead = args[0];
+			var buffer = args[1];
+
+			//return {
+			chitinHeader = {
+				number_of_bif_files: buffer.readUInt32LE(8),
+				number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
+				offset_to_table_of_files: buffer.readUInt32LE(16),
+				offset_to_table_of_keys: buffer.readUInt32LE(20),
+				build_year: buffer.readUInt32LE(24),
+				build_day: buffer.readUInt32LE(28),
+				header_length: 60
+			};
+
+			return fd;
+
+		})
+
+		//console.log(s);
 
 
-		parseBifFileDataInChitin(fd);
-		parseTableOfKeys(fd);
-
-
-		console.log('Bif Files', bifFiles);
-		console.log('Chitin header', chitinHeader);
-		console.log('Bif File Items', filesInBifs);
-	})
+	// fs.read(fd, new Buffer(chitinHeader.header_length), 0, chitinHeader.header_length, 0, function readKeyHeader (errRead, bytesRead, buffer) {
+	// 	chitinHeader.number_of_bif_files = buffer.readUInt32LE(8)
+	// 	chitinHeader.number_of_entries_in_chitin_key = buffer.readUInt32LE(12)
+	// 	chitinHeader.offset_to_table_of_files = buffer.readUInt32LE(16)
+	// 	chitinHeader.offset_to_table_of_keys = buffer.readUInt32LE(20)
+	// 	chitinHeader.build_year = buffer.readUInt32LE(24)
+	// 	chitinHeader.build_day = buffer.readUInt32LE(28)
+	// 	return true;
+	// })
+	// .then( function(){
+	// 		console.log('reading Promise');
+	// 		parseBifFileDataInChitin(fd);
+	// 		parseTableOfKeys(fd);
+	// })
+	// .then( function(){
+	// 	console.log('Bif Files', bifFiles);
+	// 	console.log('Chitin header', chitinHeader);
+	// 	console.log('Bif File Items', filesInBifs);
+	// });
 }
 
 function parseBifFileDataInChitin (fd) {
@@ -97,7 +148,7 @@ function parseBifFileDataInChitin (fd) {
 			bifFiles.push(bif);
 		});
 	}
-
+	return fd;
 }
 
 let filesInBifs = [];
@@ -109,16 +160,30 @@ function parseTableOfKeys(fd){
 			let file = {
 				resref: buffer.toString('utf8', 0, 16),
 				file_extension_code: buffer.readUInt16LE(16),
-				offsetNumber: buffer.readUInt32LE(18)
+				uniqueId: buffer.readUInt32LE(18)
 			};
+
+			//var IntA =
+			file.bifIndex = file.uniqueId >> 20
+			file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20)
+
 
 			file.fileExtension = fileExtensionLookup[file.file_extension_code];
 			file.fileName = file.resref + "." + file.fileExtension;
 
+			//if( file.uniqueId > 2097693 && file.uniqueId < 2097697) console.log(file);
 
-			filesInBifs.push(file);
+			//filesInBifs.push(file);
+			if(!bifFiles[file.bifIndex]) console.log('Error File!!!', file);
+
+			if(!bifFiles[file.bifIndex].files) bifFiles[file.bifIndex].files = [];
+
+			bifFiles[file.bifIndex].files.push(file);
+
 		});
 	}
+
+	return fd;
 }
 
 
