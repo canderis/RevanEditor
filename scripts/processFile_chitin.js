@@ -12,7 +12,6 @@ var fs = Promise.promisifyAll(require('fs'),{
 });
 fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
 
-
 function openFile() {
 	console.log('here');
 	dialog.showOpenDialog({ properties: ['openDirectory'] }, function (fileNames) {
@@ -154,14 +153,26 @@ function parseTableOfKeys(fd){
 			let file = {
 				resref: buffer.toString('utf8', 0, 16),
 				file_extension_code: buffer.readUInt16LE(16),
-				offsetNumber: buffer.readUInt32LE(18)
+				uniqueId: buffer.readUInt32LE(18)
 			};
+
+			//var IntA =
+			file.bifIndex = file.uniqueId >> 20
+			file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20)
+
 
 			file.fileExtension = fileExtensionLookup[file.file_extension_code];
 			file.fileName = file.resref + "." + file.fileExtension;
 
+			if( file.uniqueId > 2097693 && file.uniqueId < 2097697) console.log(file);
 
-			filesInBifs.push(file);
+			//filesInBifs.push(file);
+			if(!bifFiles[file.bifIndex]) console.log('Error File!!!', file);
+
+			if(!bifFiles[file.bifIndex].files) bifFiles[file.bifIndex].files = [];
+
+			bifFiles[file.bifIndex].files.push(file);
+
 		});
 	}
 }
