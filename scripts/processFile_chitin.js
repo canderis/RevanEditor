@@ -3,8 +3,6 @@ const remote = electron.remote
 
 const dialog = remote.dialog
 var Promise = require("bluebird");
-//const read = Promise.promisify(require("fs").read);
-
 var fs = Promise.promisifyAll(require('fs'),{
 	filter: function(name) {
 		return name !== "read";
@@ -66,8 +64,15 @@ function parseChitinKey (directory) {
 	// });
 
 	fs.openAsync(directory + '/chitin.key', 'r')
-		.then(readChitinHeader);
+		.then(readChitinHeader)
+		.then(parseBifFileDataInChitin)
+		.then(parseTableOfKeys)
+		.then(function(){
+			console.log(bifFiles);
+		});
 }
+
+let chitinHeader;
 
 function readChitinHeader (fd) {
 	// let chitinHeader = {
@@ -80,12 +85,13 @@ function readChitinHeader (fd) {
 	// 	header_length: 60
 	// };
 
-	fs.readAsync(fd, new Buffer(60), 0, 60, 0 )
+	return fs.readAsync(fd, new Buffer(60), 0, 60, 0 )
 		.then( function(args){
 			var bytesRead = args[0];
 			var buffer = args[1];
 
-			return {
+			//return {
+			chitinHeader = {
 				number_of_bif_files: buffer.readUInt32LE(8),
 				number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
 				offset_to_table_of_files: buffer.readUInt32LE(16),
@@ -95,10 +101,11 @@ function readChitinHeader (fd) {
 				header_length: 60
 			};
 
-		}).then( function(chitinHeader){
-			console.log(chitinHeader);
+			return fd;
 
-		});
+		})
+
+		//console.log(s);
 
 
 	// fs.read(fd, new Buffer(chitinHeader.header_length), 0, chitinHeader.header_length, 0, function readKeyHeader (errRead, bytesRead, buffer) {
@@ -141,7 +148,7 @@ function parseBifFileDataInChitin (fd) {
 			bifFiles.push(bif);
 		});
 	}
-
+	return fd;
 }
 
 let filesInBifs = [];
@@ -164,7 +171,7 @@ function parseTableOfKeys(fd){
 			file.fileExtension = fileExtensionLookup[file.file_extension_code];
 			file.fileName = file.resref + "." + file.fileExtension;
 
-			if( file.uniqueId > 2097693 && file.uniqueId < 2097697) console.log(file);
+			//if( file.uniqueId > 2097693 && file.uniqueId < 2097697) console.log(file);
 
 			//filesInBifs.push(file);
 			if(!bifFiles[file.bifIndex]) console.log('Error File!!!', file);
@@ -175,6 +182,8 @@ function parseTableOfKeys(fd){
 
 		});
 	}
+
+	return fd;
 }
 
 
