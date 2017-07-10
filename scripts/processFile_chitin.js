@@ -67,12 +67,32 @@ function parseChitinKey (directory) {
 		.then(readChitinHeader)
 		.then(parseBifFileDataInChitin)
 		.then(parseTableOfKeys)
+		//.then(arrangeBifFilesByTheAlphabet)
 		.then(function(){
 			console.log(bifFiles);
 		});
 }
 
 let chitinHeader;
+
+function arrangeBifFilesByTheAlphabet(){
+	bifFiles.forEach(function(bif){
+		bif.files.forEach(function(file){
+			//var firstChar = ;
+			bif.sortedFiles[file.resRef.substr(0, 1)].push(file);
+		});
+		bif.sortedFiles.forEach(function(fileCategory){
+			fileCategory.sort( function (a,b) {
+				if (a.resRef < b.resRef)
+					return -1;
+				if (a.resRef > b.resRef)
+					return 1;
+				return 0;
+			});
+		});
+	});
+
+}
 
 function readChitinHeader (fd) {
 	// let chitinHeader = {
