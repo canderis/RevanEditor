@@ -327,6 +327,7 @@
 					file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20)
 
 
+
 					file.fileExtension = me.fileExtensionLookup[file.file_extension_code];
 					file.fileName = file.resref + "." + file.fileExtension;
 
