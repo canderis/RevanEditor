@@ -2,26 +2,25 @@
 	<div id="wrapper">
 		<main>
 			<el-button type="primary" @click="openFile()">Open Key</el-button>
-			<el-button type="primary" @click="loadMyTree()">loadMyTree</el-button>
 
-			<el-tree :data="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
+			<el-tree :data="bifFiles" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
 		</main>
 	</div>
 </template>
 
 <script>
 
-const electron = require('electron')
-const remote = electron.remote
+const electron = require('electron');
+const fs = require('fs');
 
-const dialog = remote.dialog
-var Promise = require("bluebird");
-var fs = Promise.promisifyAll(require('fs'),{
-	filter: function(name) {
-		return name !== "read";
-	}
-});
-fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
+const dialog = electron.remote.dialog;
+// var Promise = require("bluebird");
+// var fs = Promise.promisifyAll(,{
+// 	filter: function(name) {
+// 		return name !== "read";
+// 	}
+// });
+// fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
 
 export default {
 	name: 'landing-page',
@@ -33,7 +32,6 @@ export default {
 	        	label: 'fileName',
 				isLeaf: 'leaf'
 	        },
-			fileTree:[],
 			bifFiles: [],
 			fileExtensionLookup: {
 				'0':    'res',
@@ -147,7 +145,6 @@ export default {
 			var me = this;
 
 			dialog.showOpenDialog({ properties: ['openDirectory'] }, function (fileNames) {
-				console.log(fileNames);
 
 				if(fileNames.length < 1){
 					return false;
@@ -183,24 +180,24 @@ export default {
 			})
 		},
 
-		loadMyTree(){
-			console.log('loadMyTree')
-			this.fileTree = this.bifFiles;
-
-		},
-
-
 		parseChitinKey (directory) {
 			var me = this;
 
-			fs.openAsync(directory + '/chitin.key', 'r')
-				.then(me.readChitinHeader)
-				.then(me.parseBifFileDataInChitin)
-				.then(me.parseTableOfKeys)
-				.then(me.organizeTree)
-				.then(function(){
-					console.log(me.bifFiles);
-				});
+			fs.open(directory + '/chitin.key', 'r', function(err, fd){
+				if(err){
+					throw new Error(err);
+				}
+				me.chitinHeader = me.readChitinHeader(fd);
+				var bifFiles = me.parseBifFileDataInChitin(fd, me.chitinHeader);
+				bifFiles = me.parseTableOfKeys(fd, me.chitinHeader, bifFiles, me.fileExtensionLookup);
+				console.log(bifFiles);
+				me.bifFiles = bifFiles;
+					// .then(me.organizeTree)
+					// .then(function(){
+					// 	console.log(me.bifFiles);
+					// });
+			})
+
 		},
 
 		//TODO: This function should loop over all files and
@@ -214,83 +211,76 @@ export default {
 
 		readChitinHeader (fd) {
 			var me = this;
+			let buffer = new Buffer(60);
+			fs.readSync(fd, buffer, 0, 60, 0 );
 
-			return fs.readAsync(fd, new Buffer(60), 0, 60, 0 )
-				.then( function(args){
-					var bytesRead = args[0];
-					var buffer = args[1];
-
-					me.chitinHeader = {
-						number_of_bif_files: buffer.readUInt32LE(8),
-						number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
-						offset_to_table_of_files: buffer.readUInt32LE(16),
-						offset_to_table_of_keys: buffer.readUInt32LE(20),
-						build_year: buffer.readUInt32LE(24),
-						build_day: buffer.readUInt32LE(28),
-						header_length: 60
-					};
-
-					return fd;
-
-				});
+			return {
+				number_of_bif_files: buffer.readUInt32LE(8),
+				number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
+				offset_to_table_of_files: buffer.readUInt32LE(16),
+				offset_to_table_of_keys: buffer.readUInt32LE(20),
+				build_year: buffer.readUInt32LE(24),
+				build_day: buffer.readUInt32LE(28),
+				header_length: 60
+			};
 		},
 
-		parseBifFileDataInChitin (fd) {
+		parseBifFileDataInChitin (fd, chitinHeader) {
 			var me = this;
-			for (let i = 0; i < me.chitinHeader.number_of_bif_files; i++) {
+			var bifFiles = [];
+			for (let i = 0; i < chitinHeader.number_of_bif_files; i++) {
 				var bif = {};
-				fs.read(fd, new Buffer(12), 0, 12, me.chitinHeader.offset_to_table_of_files + (i * 12), function readFilename (errRead, bytesRead, buffer) {
-					var bif = {
-						size_of_file: buffer.readUInt32LE(0),
-						offset_into_filename_table_for_filename: buffer.readUInt32LE(4),
-						length_of_filename: buffer.readUInt16LE(8),
-						bif_drive: buffer.readUInt16LE(10),
-					};
+				let buffer = new Buffer(12);
+				fs.readSync(fd, buffer, 0, 12, chitinHeader.offset_to_table_of_files + (i * 12));
 
-					fs.read(fd, new Buffer(bif.length_of_filename), 0, bif.length_of_filename, bif.offset_into_filename_table_for_filename, function(error, bytes, buf) {
-						var fileName = buf.toString();
-						bif.bif_filename = fileName;
-						bif.fileName = fileName;
-					});
+				var bif = {
+					size_of_file: buffer.readUInt32LE(0),
+					offset_into_filename_table_for_filename: buffer.readUInt32LE(4),
+					length_of_filename: buffer.readUInt16LE(8),
+					bif_drive: buffer.readUInt16LE(10),
+				};
 
-					me.bifFiles.push(bif);
-				});
+				let filenameBuffer = new Buffer(bif.length_of_filename);
+				fs.readSync(fd, filenameBuffer, 0, bif.length_of_filename, bif.offset_into_filename_table_for_filename);
+
+				var fileName = filenameBuffer.toString();
+				bif.bif_filename = fileName;
+				bif.fileName = fileName;
+
+				bifFiles.push(bif);
 			}
-			return fd;
+
+			return bifFiles;
 		},
 
 
-		parseTableOfKeys(fd){
-			var me = this;
+		parseTableOfKeys(fd, chitinHeader, bifFiles, fileExtensionLookup){
+			for (let i = 0; i < chitinHeader.number_of_entries_in_chitin_key; i++) {
+				let buffer = new Buffer(22);
+				fs.readSync(fd, buffer, 0, 22, chitinHeader.offset_to_table_of_keys + (i * 22));
 
-			for (let i = 0; i < me.chitinHeader.number_of_entries_in_chitin_key; i++) {
-				fs.read(fd, new Buffer(22), 0, 22, me.chitinHeader.offset_to_table_of_keys + (i * 22), function readFilename (errRead, bytesRead, buffer) {
+				let file = {
+					resref: buffer.toString('utf8', 0, 16),
+					file_extension_code: buffer.readUInt16LE(16),
+					uniqueId: buffer.readUInt32LE(18),
+					leaf: false
+				};
 
-					let file = {
-						resref: buffer.toString('utf8', 0, 16),
-						file_extension_code: buffer.readUInt16LE(16),
-						uniqueId: buffer.readUInt32LE(18),
-						leaf: false
-					};
+				file.bifIndex = file.uniqueId >> 20
+				file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20)
 
-					file.bifIndex = file.uniqueId >> 20
-					file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20)
+				file.fileExtension = fileExtensionLookup[file.file_extension_code];
+				file.fileName = file.resref + "." + file.fileExtension;
 
+				if(!bifFiles[file.bifIndex]) console.log('Error File!!!', file);
 
+				if(!bifFiles[file.bifIndex].files) bifFiles[file.bifIndex].files = [];
 
-					file.fileExtension = me.fileExtensionLookup[file.file_extension_code];
-					file.fileName = file.resref + "." + file.fileExtension;
+				bifFiles[file.bifIndex].files.push(file);
 
-					if(!me.bifFiles[file.bifIndex]) console.log('Error File!!!', file);
-
-					if(!me.bifFiles[file.bifIndex].files) me.bifFiles[file.bifIndex].files = [];
-
-					me.bifFiles[file.bifIndex].files.push(file);
-
-				});
 			}
 
-			return fd;
+			return bifFiles;
 		}
 
 	}
