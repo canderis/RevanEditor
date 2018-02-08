@@ -2,6 +2,9 @@
 	<div id="wrapper">
 		<main>
 			<el-button type="primary" @click="openFile()">Open Key</el-button>
+			<el-button type="primary" @click="loadMyTree()">loadMyTree</el-button>
+
+			<el-tree :data="fileTree" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
 		</main>
 	</div>
 </template>
@@ -24,8 +27,13 @@ export default {
 	name: 'landing-page',
 	data:function(){
 		return {
+			emptyText: "Please open a key",
+			treeProps: {
+	        	children: 'files',
+	        	label: 'fileName',
+	        },
+			fileTree:[],
 			bifFiles: [],
-			filesInBifs: [],
 			fileExtensionLookup: {
 				'0':    'res',
 				'1':    'bmp',
@@ -119,11 +127,12 @@ export default {
 		};
 	},
 	methods: {
-		open (link) {
-			this.$electron.shell.openExternal(link)
+		handleNodeClick(data) {
+	        console.log(data);
 		},
 		openFile() {
 			var me = this;
+
 			dialog.showOpenDialog({ properties: ['openDirectory'] }, function (fileNames) {
 				console.log(fileNames);
 
@@ -161,6 +170,12 @@ export default {
 			})
 		},
 
+		loadMyTree(){
+			console.log('loadMyTree')
+			this.fileTree = this.bifFiles;
+
+		},
+
 
 		parseChitinKey (directory) {
 			var me = this;
@@ -169,7 +184,6 @@ export default {
 				.then(me.readChitinHeader)
 				.then(me.parseBifFileDataInChitin)
 				.then(me.parseTableOfKeys)
-				//.then(arrangeBifFilesByTheAlphabet)
 				.then(function(){
 					console.log(me.bifFiles);
 				});
@@ -219,20 +233,21 @@ export default {
 
 		parseBifFileDataInChitin (fd) {
 			var me = this;
-			var counter = 0
 			for (let i = 0; i < me.chitinHeader.number_of_bif_files; i++) {
+				var bif = {};
 				fs.read(fd, new Buffer(12), 0, 12, me.chitinHeader.offset_to_table_of_files + (i * 12), function readFilename (errRead, bytesRead, buffer) {
 					var bif = {
 						size_of_file: buffer.readUInt32LE(0),
 						offset_into_filename_table_for_filename: buffer.readUInt32LE(4),
 						length_of_filename: buffer.readUInt16LE(8),
-						bif_drive: buffer.readUInt16LE(10)
+						bif_drive: buffer.readUInt16LE(10),
 					};
 
 					fs.read(fd, new Buffer(bif.length_of_filename), 0, bif.length_of_filename, bif.offset_into_filename_table_for_filename, function(error, bytes, buf) {
-						bif.bif_filename = buf.toString();
+						var fileName = buf.toString();
+						bif.bif_filename = fileName;
+						bif.fileName = fileName;
 					});
-					counter++;
 
 					me.bifFiles.push(bif);
 				});
