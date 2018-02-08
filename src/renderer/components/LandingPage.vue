@@ -197,9 +197,19 @@ export default {
 				.then(me.readChitinHeader)
 				.then(me.parseBifFileDataInChitin)
 				.then(me.parseTableOfKeys)
+				.then(me.organizeTree)
 				.then(function(){
 					console.log(me.bifFiles);
 				});
+		},
+
+		//TODO: This function should loop over all files and
+		//depending on the number of items in each tree it should split them
+		//into smaller and smaller categories.
+		//First file extension
+		//Then alphabetically
+		organizeTree(){
+			return true;
 		},
 
 
