@@ -212,25 +212,6 @@ export default {
 			return true;
 		},
 
-
-		arrangeBifFilesByTheAlphabet(){
-			me.bifFiles.forEach(function(bif){
-				bif.files.forEach(function(file){
-					bif.sortedFiles[file.resRef.substr(0, 1)].push(file);
-				});
-				bif.sortedFiles.forEach(function(fileCategory){
-					fileCategory.sort( function (a,b) {
-						if (a.resRef < b.resRef)
-							return -1;
-						if (a.resRef > b.resRef)
-							return 1;
-						return 0;
-					});
-				});
-			});
-
-		},
-
 		readChitinHeader (fd) {
 			var me = this;
 
