@@ -1,25 +1,26 @@
 <template>
-  <div id="wrapper">
-	<main>
-        <el-button type="primary" @click="openFile()">Open Key</el-button>
-	</main>
-  </div>
+	<div id="wrapper">
+		<main>
+			<el-button type="primary" @click="openFile()">Open Key</el-button>
+		</main>
+	</div>
 </template>
 
 <script>
-  //import SystemInformation from './LandingPage/SystemInformation'
-  const electron = require('electron')
-  const remote = electron.remote
 
-  const dialog = remote.dialog
-  var Promise = require("bluebird");
-  var fs = Promise.promisifyAll(require('fs'),{
-	  filter: function(name) {
-		  return name !== "read";
-	  }
-  });
-  fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
-  export default {
+const electron = require('electron')
+const remote = electron.remote
+
+const dialog = remote.dialog
+var Promise = require("bluebird");
+var fs = Promise.promisifyAll(require('fs'),{
+	filter: function(name) {
+		return name !== "read";
+	}
+});
+fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
+
+export default {
 	name: 'landing-page',
 	data:function(){
 		return {
@@ -161,16 +162,6 @@
 		},
 
 
-		// let chitinHeader = {
-		// 	number_of_bif_files: '',
-		// 	number_of_entries_in_chitin_key: '',
-		// 	offset_to_table_of_files: '',
-		// 	offset_to_table_of_keys: '',
-		// 	build_year: '',
-		// 	build_day: '',
-		// 	header_length: 60
-		// };
-
 		parseChitinKey (directory) {
 			var me = this;
 
@@ -184,12 +175,10 @@
 				});
 		},
 
-		//let chitinHeader;
 
 		arrangeBifFilesByTheAlphabet(){
 			me.bifFiles.forEach(function(bif){
 				bif.files.forEach(function(file){
-					//var firstChar = ;
 					bif.sortedFiles[file.resRef.substr(0, 1)].push(file);
 				});
 				bif.sortedFiles.forEach(function(fileCategory){
@@ -207,22 +196,12 @@
 
 		readChitinHeader (fd) {
 			var me = this;
-			// let chitinHeader = {
-			// 	number_of_bif_files: '',
-			// 	number_of_entries_in_chitin_key: '',
-			// 	offset_to_table_of_files: '',
-			// 	offset_to_table_of_keys: '',
-			// 	build_year: '',
-			// 	build_day: '',
-			// 	header_length: 60
-			// };
 
 			return fs.readAsync(fd, new Buffer(60), 0, 60, 0 )
 				.then( function(args){
 					var bytesRead = args[0];
 					var buffer = args[1];
 
-					//return {
 					me.chitinHeader = {
 						number_of_bif_files: buffer.readUInt32LE(8),
 						number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
@@ -235,30 +214,7 @@
 
 					return fd;
 
-				})
-
-				//console.log(s);
-
-
-			// fs.read(fd, new Buffer(chitinHeader.header_length), 0, chitinHeader.header_length, 0, function readKeyHeader (errRead, bytesRead, buffer) {
-			// 	chitinHeader.number_of_bif_files = buffer.readUInt32LE(8)
-			// 	chitinHeader.number_of_entries_in_chitin_key = buffer.readUInt32LE(12)
-			// 	chitinHeader.offset_to_table_of_files = buffer.readUInt32LE(16)
-			// 	chitinHeader.offset_to_table_of_keys = buffer.readUInt32LE(20)
-			// 	chitinHeader.build_year = buffer.readUInt32LE(24)
-			// 	chitinHeader.build_day = buffer.readUInt32LE(28)
-			// 	return true;
-			// })
-			// .then( function(){
-			// 		console.log('reading Promise');
-			// 		parseBifFileDataInChitin(fd);
-			// 		parseTableOfKeys(fd);
-			// })
-			// .then( function(){
-			// 	console.log('Bif Files', bifFiles);
-			// 	console.log('Chitin header', chitinHeader);
-			// 	console.log('Bif File Items', filesInBifs);
-			// });
+				});
 		},
 
 		parseBifFileDataInChitin (fd) {
@@ -297,7 +253,6 @@
 						uniqueId: buffer.readUInt32LE(18)
 					};
 
-					//var IntA =
 					file.bifIndex = file.uniqueId >> 20
 					file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20)
 
@@ -306,9 +261,6 @@
 					file.fileExtension = me.fileExtensionLookup[file.file_extension_code];
 					file.fileName = file.resref + "." + file.fileExtension;
 
-					//if( file.uniqueId > 2097693 && file.uniqueId < 2097697) console.log(file);
-
-					//filesInBifs.push(file);
 					if(!me.bifFiles[file.bifIndex]) console.log('Error File!!!', file);
 
 					if(!me.bifFiles[file.bifIndex].files) me.bifFiles[file.bifIndex].files = [];
@@ -322,89 +274,7 @@
 		}
 
 	}
-  }
+}
 </script>
 
-<style>
-  /* @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
-
-  * {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-  }
-
-  body { font-family: 'Source Sans Pro', sans-serif; }
-
-  #wrapper {
-	background:
-	  radial-gradient(
-		ellipse at top left,
-		rgba(255, 255, 255, 1) 40%,
-		rgba(229, 229, 229, .9) 100%
-	  );
-	height: 100vh;
-	padding: 60px 80px;
-	width: 100vw;
-  }
-
-  #logo {
-	height: auto;
-	margin-bottom: 20px;
-	width: 420px;
-  }
-
-  main {
-	display: flex;
-	justify-content: space-between;
-  }
-
-  main > div { flex-basis: 50%; }
-
-  .left-side {
-	display: flex;
-	flex-direction: column;
-  }
-
-  .welcome {
-	color: #555;
-	font-size: 23px;
-	margin-bottom: 10px;
-  }
-
-  .title {
-	color: #2c3e50;
-	font-size: 20px;
-	font-weight: bold;
-	margin-bottom: 6px;
-  }
-
-  .title.alt {
-	font-size: 18px;
-	margin-bottom: 10px;
-  }
-
-  .doc p {
-	color: black;
-	margin-bottom: 10px;
-  }
-
-  .doc button {
-	font-size: .8em;
-	cursor: pointer;
-	outline: none;
-	padding: 0.75em 2em;
-	border-radius: 2em;
-	display: inline-block;
-	color: #fff;
-	background-color: #4fc08d;
-	transition: all 0.15s ease;
-	box-sizing: border-box;
-	border: 1px solid #4fc08d;
-  }
-
-  .doc button.alt {
-	color: #42b983;
-	background-color: transparent;
-  } */
-</style>
+<style></style>
