@@ -4,7 +4,7 @@
 			<el-button type="primary" @click="openFile()">Open Key</el-button>
 			<el-button type="primary" @click="loadMyTree()">loadMyTree</el-button>
 
-			<el-tree :data="fileTree" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
+			<el-tree :data="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
 		</main>
 	</div>
 </template>
@@ -31,6 +31,7 @@ export default {
 			treeProps: {
 	        	children: 'files',
 	        	label: 'fileName',
+				isLeaf: 'leaf'
 	        },
 			fileTree:[],
 			bifFiles: [],
@@ -129,6 +130,18 @@ export default {
 	methods: {
 		handleNodeClick(data) {
 	        console.log(data);
+		},
+		loadNode1(node, resolve) {
+			console.log(node);
+	        if (node.level === 0) {
+	          return resolve(node.data);
+	        }
+
+	        if (node.level > 1) return resolve([]);
+
+
+	        resolve(node.data.files);
+
 		},
 		openFile() {
 			var me = this;
@@ -265,7 +278,8 @@ export default {
 					let file = {
 						resref: buffer.toString('utf8', 0, 16),
 						file_extension_code: buffer.readUInt16LE(16),
-						uniqueId: buffer.readUInt32LE(18)
+						uniqueId: buffer.readUInt32LE(18),
+						leaf: false
 					};
 
 					file.bifIndex = file.uniqueId >> 20
