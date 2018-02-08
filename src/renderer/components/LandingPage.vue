@@ -14,13 +14,6 @@ const electron = require('electron');
 const fs = require('fs');
 
 const dialog = electron.remote.dialog;
-// var Promise = require("bluebird");
-// var fs = Promise.promisifyAll(,{
-// 	filter: function(name) {
-// 		return name !== "read";
-// 	}
-// });
-// fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
 
 export default {
 	name: 'landing-page',
