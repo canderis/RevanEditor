@@ -1,55 +1,40 @@
 <template>
-  <div id="wrapper">
-	<img id="logo" src="~@/assets/logo.png" alt="electron-vue">
-	<main>
-	  <div class="left-side">
-		<span class="title">
-		  Welcome to your new project!
-		</span>
-		<system-information></system-information>
-	  </div>
+	<div id="wrapper">
+		<main>
+			<el-button type="primary" @click="openFile()">Open Key</el-button>
+			<el-button type="primary" @click="loadMyTree()">loadMyTree</el-button>
 
-	  <div class="right-side">
-		<div class="doc">
-		  <div class="title">Getting Started</div>
-		  <p>
-			electron-vue comes packed with detailed documentation that covers everything from
-			internal configurations, using the project structure, building your application,
-			and so much more.
-		  </p>
-		  <button @click="open('https://simulatedgreg.gitbooks.io/electron-vue/content/')">Read the Docs</button><br><br>
-		</div>
-		<div class="doc">
-		  <div class="title alt">Other Documentation</div>
-		  <button class="alt" @click="open('https://electron.atom.io/docs/')">Electron</button>
-		  <button class="alt" @click="open('https://vuejs.org/v2/guide/')">Vue.js</button>
-		  <button class="alt" @click="openFile()">Open Key</button>
-		</div>
-	  </div>
-	</main>
-  </div>
+			<el-tree :data="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
+		</main>
+	</div>
 </template>
 
 <script>
-  import SystemInformation from './LandingPage/SystemInformation'
-  const electron = require('electron')
-  const remote = electron.remote
 
-  const dialog = remote.dialog
-  var Promise = require("bluebird");
-  var fs = Promise.promisifyAll(require('fs'),{
-	  filter: function(name) {
-		  return name !== "read";
-	  }
-  });
-  fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
-  export default {
+const electron = require('electron')
+const remote = electron.remote
+
+const dialog = remote.dialog
+var Promise = require("bluebird");
+var fs = Promise.promisifyAll(require('fs'),{
+	filter: function(name) {
+		return name !== "read";
+	}
+});
+fs.readAsync = Promise.promisify(fs.read, {multiArgs: true });
+
+export default {
 	name: 'landing-page',
-	components: { SystemInformation },
 	data:function(){
 		return {
+			emptyText: "Please open a key",
+			treeProps: {
+	        	children: 'files',
+	        	label: 'fileName',
+				isLeaf: 'leaf'
+	        },
+			fileTree:[],
 			bifFiles: [],
-			filesInBifs: [],
 			fileExtensionLookup: {
 				'0':    'res',
 				'1':    'bmp',
@@ -143,11 +128,24 @@
 		};
 	},
 	methods: {
-		open (link) {
-			this.$electron.shell.openExternal(link)
+		handleNodeClick(data) {
+	        console.log(data);
+		},
+		loadNode1(node, resolve) {
+			console.log(node);
+	        if (node.level === 0) {
+	          return resolve(node.data);
+	        }
+
+	        if (node.level > 1) return resolve([]);
+
+
+	        resolve(node.data.files);
+
 		},
 		openFile() {
 			var me = this;
+
 			dialog.showOpenDialog({ properties: ['openDirectory'] }, function (fileNames) {
 				console.log(fileNames);
 
@@ -185,16 +183,12 @@
 			})
 		},
 
+		loadMyTree(){
+			console.log('loadMyTree')
+			this.fileTree = this.bifFiles;
 
-		// let chitinHeader = {
-		// 	number_of_bif_files: '',
-		// 	number_of_entries_in_chitin_key: '',
-		// 	offset_to_table_of_files: '',
-		// 	offset_to_table_of_keys: '',
-		// 	build_year: '',
-		// 	build_day: '',
-		// 	header_length: 60
-		// };
+		},
+
 
 		parseChitinKey (directory) {
 			var me = this;
@@ -203,18 +197,25 @@
 				.then(me.readChitinHeader)
 				.then(me.parseBifFileDataInChitin)
 				.then(me.parseTableOfKeys)
-				//.then(arrangeBifFilesByTheAlphabet)
+				.then(me.organizeTree)
 				.then(function(){
 					console.log(me.bifFiles);
 				});
 		},
 
-		//let chitinHeader;
+		//TODO: This function should loop over all files and
+		//depending on the number of items in each tree it should split them
+		//into smaller and smaller categories.
+		//First file extension
+		//Then alphabetically
+		organizeTree(){
+			return true;
+		},
+
 
 		arrangeBifFilesByTheAlphabet(){
 			me.bifFiles.forEach(function(bif){
 				bif.files.forEach(function(file){
-					//var firstChar = ;
 					bif.sortedFiles[file.resRef.substr(0, 1)].push(file);
 				});
 				bif.sortedFiles.forEach(function(fileCategory){
@@ -232,22 +233,12 @@
 
 		readChitinHeader (fd) {
 			var me = this;
-			// let chitinHeader = {
-			// 	number_of_bif_files: '',
-			// 	number_of_entries_in_chitin_key: '',
-			// 	offset_to_table_of_files: '',
-			// 	offset_to_table_of_keys: '',
-			// 	build_year: '',
-			// 	build_day: '',
-			// 	header_length: 60
-			// };
 
 			return fs.readAsync(fd, new Buffer(60), 0, 60, 0 )
 				.then( function(args){
 					var bytesRead = args[0];
 					var buffer = args[1];
 
-					//return {
 					me.chitinHeader = {
 						number_of_bif_files: buffer.readUInt32LE(8),
 						number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
@@ -260,48 +251,26 @@
 
 					return fd;
 
-				})
-
-				//console.log(s);
-
-
-			// fs.read(fd, new Buffer(chitinHeader.header_length), 0, chitinHeader.header_length, 0, function readKeyHeader (errRead, bytesRead, buffer) {
-			// 	chitinHeader.number_of_bif_files = buffer.readUInt32LE(8)
-			// 	chitinHeader.number_of_entries_in_chitin_key = buffer.readUInt32LE(12)
-			// 	chitinHeader.offset_to_table_of_files = buffer.readUInt32LE(16)
-			// 	chitinHeader.offset_to_table_of_keys = buffer.readUInt32LE(20)
-			// 	chitinHeader.build_year = buffer.readUInt32LE(24)
-			// 	chitinHeader.build_day = buffer.readUInt32LE(28)
-			// 	return true;
-			// })
-			// .then( function(){
-			// 		console.log('reading Promise');
-			// 		parseBifFileDataInChitin(fd);
-			// 		parseTableOfKeys(fd);
-			// })
-			// .then( function(){
-			// 	console.log('Bif Files', bifFiles);
-			// 	console.log('Chitin header', chitinHeader);
-			// 	console.log('Bif File Items', filesInBifs);
-			// });
+				});
 		},
 
 		parseBifFileDataInChitin (fd) {
 			var me = this;
-			var counter = 0
 			for (let i = 0; i < me.chitinHeader.number_of_bif_files; i++) {
+				var bif = {};
 				fs.read(fd, new Buffer(12), 0, 12, me.chitinHeader.offset_to_table_of_files + (i * 12), function readFilename (errRead, bytesRead, buffer) {
 					var bif = {
 						size_of_file: buffer.readUInt32LE(0),
 						offset_into_filename_table_for_filename: buffer.readUInt32LE(4),
 						length_of_filename: buffer.readUInt16LE(8),
-						bif_drive: buffer.readUInt16LE(10)
+						bif_drive: buffer.readUInt16LE(10),
 					};
 
 					fs.read(fd, new Buffer(bif.length_of_filename), 0, bif.length_of_filename, bif.offset_into_filename_table_for_filename, function(error, bytes, buf) {
-						bif.bif_filename = buf.toString();
+						var fileName = buf.toString();
+						bif.bif_filename = fileName;
+						bif.fileName = fileName;
 					});
-					counter++;
 
 					me.bifFiles.push(bif);
 				});
@@ -319,10 +288,10 @@
 					let file = {
 						resref: buffer.toString('utf8', 0, 16),
 						file_extension_code: buffer.readUInt16LE(16),
-						uniqueId: buffer.readUInt32LE(18)
+						uniqueId: buffer.readUInt32LE(18),
+						leaf: false
 					};
 
-					//var IntA =
 					file.bifIndex = file.uniqueId >> 20
 					file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20)
 
@@ -331,9 +300,6 @@
 					file.fileExtension = me.fileExtensionLookup[file.file_extension_code];
 					file.fileName = file.resref + "." + file.fileExtension;
 
-					//if( file.uniqueId > 2097693 && file.uniqueId < 2097697) console.log(file);
-
-					//filesInBifs.push(file);
 					if(!me.bifFiles[file.bifIndex]) console.log('Error File!!!', file);
 
 					if(!me.bifFiles[file.bifIndex].files) me.bifFiles[file.bifIndex].files = [];
@@ -347,89 +313,7 @@
 		}
 
 	}
-  }
+}
 </script>
 
-<style>
-  @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
-
-  * {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-  }
-
-  body { font-family: 'Source Sans Pro', sans-serif; }
-
-  #wrapper {
-	background:
-	  radial-gradient(
-		ellipse at top left,
-		rgba(255, 255, 255, 1) 40%,
-		rgba(229, 229, 229, .9) 100%
-	  );
-	height: 100vh;
-	padding: 60px 80px;
-	width: 100vw;
-  }
-
-  #logo {
-	height: auto;
-	margin-bottom: 20px;
-	width: 420px;
-  }
-
-  main {
-	display: flex;
-	justify-content: space-between;
-  }
-
-  main > div { flex-basis: 50%; }
-
-  .left-side {
-	display: flex;
-	flex-direction: column;
-  }
-
-  .welcome {
-	color: #555;
-	font-size: 23px;
-	margin-bottom: 10px;
-  }
-
-  .title {
-	color: #2c3e50;
-	font-size: 20px;
-	font-weight: bold;
-	margin-bottom: 6px;
-  }
-
-  .title.alt {
-	font-size: 18px;
-	margin-bottom: 10px;
-  }
-
-  .doc p {
-	color: black;
-	margin-bottom: 10px;
-  }
-
-  .doc button {
-	font-size: .8em;
-	cursor: pointer;
-	outline: none;
-	padding: 0.75em 2em;
-	border-radius: 2em;
-	display: inline-block;
-	color: #fff;
-	background-color: #4fc08d;
-	transition: all 0.15s ease;
-	box-sizing: border-box;
-	border: 1px solid #4fc08d;
-  }
-
-  .doc button.alt {
-	color: #42b983;
-	background-color: transparent;
-  }
-</style>
+<style></style>
