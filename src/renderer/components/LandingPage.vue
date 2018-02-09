@@ -2,6 +2,8 @@
 	<div id="wrapper">
 		<main>
 			<el-button type="primary" @click="openFile()">Open Key</el-button>
+			<el-button type="primary" @click="open2da()">Open 2da</el-button>
+
 
 			<el-tree :data="bifFiles" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
 		</main>
@@ -20,11 +22,13 @@ export default {
 	data:function(){
 		return {
 			emptyText: "Please open a key",
+			k1Path: "",
+			tslPath: "",
 			treeProps: {
-	        	children: 'files',
-	        	label: 'fileName',
+				children: 'files',
+				label: 'fileName',
 				isLeaf: 'leaf'
-	        },
+			},
 			bifFiles: [],
 			fileExtensionLookup: {
 				'0':    'res',
@@ -119,19 +123,54 @@ export default {
 		};
 	},
 	methods: {
+		open2da(){
+			var me = this;
+
+			fs.open(me.k1Path + '/data/2da.bif', 'r', function(err, fd){
+				if(err){
+					throw new Error(err);
+				}
+
+				var buffer = new Buffer(20);
+				fs.readSync(fd, buffer, 0, 20, 0 );
+
+				var bifHeader = {
+					number_of_variable_resources: buffer.readUInt32LE(8),
+					number_of_fixed_resouces: buffer.readUInt32LE(12),
+					offset_to_variable_resouces: buffer.readUInt32LE(16)
+				};
+
+				buffer = new Buffer(16);
+				fs.readSync(fd, buffer, 0, 16, 20 );
+				var variableTable = {
+					id: buffer.readUInt32LE(0),
+					offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
+					size_of_raw_data_chunk: buffer.readUInt32LE(8),
+					resource_type: buffer.readUInt32LE(12)
+				};
+
+				console.log(variableTable);
+
+				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
+				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, bifHeader.offset_to_variable_resouces );
+
+				fs.writeFileSync(me.k1Path + '/acbonus.2da', buffer.toString());
+
+			})
+		},
 		handleNodeClick(data) {
-	        console.log(data);
+			console.log(data);
 		},
 		loadNode1(node, resolve) {
 			console.log(node);
-	        if (node.level === 0) {
-	          return resolve(node.data);
-	        }
+			if (node.level === 0) {
+			  return resolve(node.data);
+			}
 
-	        if (node.level > 1) return resolve([]);
+			if (node.level > 1) return resolve([]);
 
 
-	        resolve(node.data.files);
+			resolve(node.data.files);
 
 		},
 		openFile() {
