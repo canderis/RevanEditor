@@ -2,10 +2,10 @@
 	<div id="wrapper">
 		<main>
 			<el-button type="primary" @click="openFile()">Open Key</el-button>
-			<el-button type="primary" @click="open2da()">Open 2da</el-button>
+			<el-button type="primary" @click="open2da()">Extract File</el-button>
 
 
-			<el-tree :data="bifFiles" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
+			<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
 		</main>
 	</div>
 </template>
@@ -125,8 +125,17 @@ export default {
 	methods: {
 		open2da(){
 			var me = this;
+			var file = me.$refs.fileTree.getCurrentNode();
 
-			fs.open(me.k1Path + '/data/2da.bif', 'r', function(err, fd){
+			if(file.leaf){
+				console.log("select a file");
+				return false;
+			}
+
+			console.log("file:",me.bifFiles[file.bifIndex]);
+
+			//console.log(me.k1Path + "/" + me.bifFiles[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''))
+			fs.open(me.k1Path + "/" + me.bifFiles[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r', function(err, fd){
 				if(err){
 					throw new Error(err);
 				}
@@ -143,7 +152,7 @@ export default {
 
 
 				buffer = new Buffer(16);
-				fs.readSync(fd, buffer, 0, 16, 20 );
+				fs.readSync(fd, buffer, 0, 16, bifHeader.offset_to_variable_resouces + 16*file.indexOfFileInBif );
 				var variableTable = {
 					id: buffer.readUInt32LE(0),
 					offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
@@ -156,12 +165,12 @@ export default {
 				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
 				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
 
-				fs.writeFileSync(me.k1Path + '/acbonus.2da', buffer);
+				fs.writeFileSync(me.k1Path + "/"+ file.fileName.trim().replace(/\0/g, ''), buffer);
 
 			})
 		},
 		handleNodeClick(data) {
-			console.log(data);
+			console.log('data:', data);
 		},
 		loadNode1(node, resolve) {
 			console.log(node);
