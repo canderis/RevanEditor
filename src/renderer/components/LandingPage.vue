@@ -2,7 +2,7 @@
 	<div id="wrapper">
 		<main>
 			<el-button type="primary" @click="openFile()">Open Key</el-button>
-			<el-button type="primary" @click="open2da()">Extract File</el-button>
+			<el-button type="primary" @click="extractBif()">Extract File</el-button>
 
 
 			<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
@@ -12,13 +12,23 @@
 
 <script>
 
-const electron = require('electron');
+const electron = require('electron')
 const fs = require('fs');
 
 const dialog = electron.remote.dialog;
+const app = electron.remote.app;
+import path from 'path'
+
 
 export default {
 	name: 'landing-page',
+	created: function () {
+		if(!fs.existsSync(path.join(app.getPath("userData"), '/RevanEditorPreferences.json'))){
+			console.log('file Does not Exist fammm')
+			this.$router.push('GameSelection')
+		}
+	},
+
 	data:function(){
 		return {
 			emptyText: "Please open a key",
@@ -123,18 +133,17 @@ export default {
 		};
 	},
 	methods: {
-		open2da(){
+		extractBif(){
 			var me = this;
 			var file = me.$refs.fileTree.getCurrentNode();
 
-			if(file.leaf){
+			console.log("file", file);
+
+			if(!file || file.leaf === undefined){
 				console.log("select a file");
 				return false;
 			}
 
-			console.log("file:",me.bifFiles[file.bifIndex]);
-
-			//console.log(me.k1Path + "/" + me.bifFiles[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''))
 			fs.open(me.k1Path + "/" + me.bifFiles[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r', function(err, fd){
 				if(err){
 					throw new Error(err);
@@ -148,7 +157,6 @@ export default {
 					number_of_fixed_resouces: buffer.readUInt32LE(12),
 					offset_to_variable_resouces: buffer.readUInt32LE(16)
 				};
-				console.log(bifHeader);
 
 
 				buffer = new Buffer(16);
@@ -159,8 +167,6 @@ export default {
 					size_of_raw_data_chunk: buffer.readUInt32LE(8),
 					resource_type: buffer.readUInt32LE(12)
 				};
-
-				console.log(variableTable);
 
 				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
 				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
@@ -189,11 +195,11 @@ export default {
 
 			dialog.showOpenDialog({ properties: ['openDirectory'] }, function (fileNames) {
 
-				if(fileNames.length < 1){
+				if(!fileNames || fileNames.length < 1){
 					return false;
 				}
-				let directory = fileNames[0];
 
+				let directory = fileNames[0];
 
 				fs.readdir(directory, function (err, data) {
 					if (err) return console.log(err)
@@ -235,10 +241,6 @@ export default {
 				bifFiles = me.parseTableOfKeys(fd, me.chitinHeader, bifFiles, me.fileExtensionLookup);
 				console.log(bifFiles);
 				me.bifFiles = bifFiles;
-					// .then(me.organizeTree)
-					// .then(function(){
-					// 	console.log(me.bifFiles);
-					// });
 			})
 
 		},
@@ -320,7 +322,6 @@ export default {
 				if(!bifFiles[file.bifIndex].files) bifFiles[file.bifIndex].files = [];
 
 				bifFiles[file.bifIndex].files.push(file);
-
 			}
 
 			return bifFiles;
