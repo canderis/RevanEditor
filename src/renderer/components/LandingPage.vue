@@ -139,6 +139,8 @@ export default {
 					number_of_fixed_resouces: buffer.readUInt32LE(12),
 					offset_to_variable_resouces: buffer.readUInt32LE(16)
 				};
+				console.log(bifHeader);
+
 
 				buffer = new Buffer(16);
 				fs.readSync(fd, buffer, 0, 16, 20 );
@@ -152,9 +154,9 @@ export default {
 				console.log(variableTable);
 
 				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
-				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, bifHeader.offset_to_variable_resouces );
+				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
 
-				fs.writeFileSync(me.k1Path + '/acbonus.2da', buffer.toString());
+				fs.writeFileSync(me.k1Path + '/acbonus.2da', buffer);
 
 			})
 		},
