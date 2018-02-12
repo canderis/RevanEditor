@@ -1,7 +1,7 @@
 <template>
 	<div id="wrapper">
 		<main>
-			<h1>
+			<h1 class="title">
 				Revan Editor
 			</h1>
 			<br />
@@ -134,7 +134,7 @@ export default {
 </script>
 
 <style>
-h1{
+.title{
 
 	font-size: 50px;
 	font-weight: 100;
@@ -146,7 +146,7 @@ p{
 	font-weight: 300;
 	margin-left: 30px;
 }
-p, h1{
+p, .title{
 	font-family: "Helvetica Neue",Helvetica;
 
 }
