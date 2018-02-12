@@ -14,6 +14,11 @@ export default new Router({
       component: require('@/components/LandingPage').default
     },
     {
+        path: '/GameSelection',
+        name: 'game-selection',
+        component: require('@/components/GameSelection').default
+    },
+    {
       path: '*',
       redirect: '/'
     }

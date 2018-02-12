@@ -1,29 +1,77 @@
 <template>
-	<div id="wrapper">
-		<main>
-			<el-button type="primary" @click="openFile()">Open Key</el-button>
-			<el-button type="primary" @click="open2da()">Extract File</el-button>
+	<el-container>
+		<el-header>
+			<el-button @click="goToPaths()" type="primary">Paths</el-button>
+			<h1>
+				Revan Editor
+			</h1>
+		</el-header>
 
+		<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText"></el-tree>
 
-			<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
-		</main>
-	</div>
+		<el-aside>
+			<el-button @click="extractBif()" type="primary">Export</el-button>
+		</el-aside>
+	</el-container>
 </template>
 
 <script>
 
-const electron = require('electron');
+const electron = require('electron')
 const fs = require('fs');
 
 const dialog = electron.remote.dialog;
+const app = electron.remote.app;
+import path from 'path'
+const _ = require('lodash');
+
 
 export default {
 	name: 'landing-page',
+	created: function () {
+		var me = this;
+		me.filePath = path.join(app.getPath("userData"), '/RevanEditorPreferences.json');
+
+		if(!fs.existsSync(me.filePath)){
+			me.$router.push('GameSelection');
+			return;
+		}
+		var json = JSON.parse(fs.readFileSync(me.filePath) );
+		me.kotorPath = json.kotorPath;
+		me.tslPath = json.tslPath;
+		if(!me.kotorPath && !me.tslPath){
+			me.$router.push('GameSelection');
+			return;
+		}
+
+		var bifFiles = [];
+		var kotor = {fileName:'KotOR', files:[]};
+		var tsl = {fileName:'TSL', files:[]};
+
+		if(me.kotorPath){
+			me.currentGame = "k1";
+			kotor.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.kotorPath, 'KotOR') });
+		}
+		if(me.tslPath){
+			me.currentGame = "tsl";
+			tsl.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.tslPath, 'TSL') });
+		}
+
+		me.currentGame = "";
+
+		bifFiles.push(kotor);
+		bifFiles.push(tsl);
+
+		me.bifFiles = bifFiles;
+	},
+
 	data:function(){
 		return {
 			emptyText: "Please open a key",
-			k1Path: "",
+			filePath: "",
+			kotorPath: "",
 			tslPath: "",
+			currentGame: "",
 			treeProps: {
 				children: 'files',
 				label: 'fileName',
@@ -123,19 +171,27 @@ export default {
 		};
 	},
 	methods: {
-		open2da(){
+		goToPaths(){
+			this.$router.push('GameSelection');
+		},
+
+		extractBif(){
 			var me = this;
 			var file = me.$refs.fileTree.getCurrentNode();
 
-			if(file.leaf){
+			if(!file || file.leaf === undefined){
 				console.log("select a file");
 				return false;
 			}
 
-			console.log("file:",me.bifFiles[file.bifIndex]);
+			var path = me.kotorPath;
+			var index = 0;
+			if(file.game === "tsl"){
+				path = me.tslPath;
+				index = 1;
+			}
 
-			//console.log(me.k1Path + "/" + me.bifFiles[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''))
-			fs.open(me.k1Path + "/" + me.bifFiles[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r', function(err, fd){
+			fs.open(path + "/" + me.bifFiles[index].files[0].files[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r', function(err, fd){
 				if(err){
 					throw new Error(err);
 				}
@@ -148,7 +204,6 @@ export default {
 					number_of_fixed_resouces: buffer.readUInt32LE(12),
 					offset_to_variable_resouces: buffer.readUInt32LE(16)
 				};
-				console.log(bifHeader);
 
 
 				buffer = new Buffer(16);
@@ -160,97 +215,39 @@ export default {
 					resource_type: buffer.readUInt32LE(12)
 				};
 
-				console.log(variableTable);
-
 				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
 				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
 
-				fs.writeFileSync(me.k1Path + "/"+ file.fileName.trim().replace(/\0/g, ''), buffer);
+				dialog.showSaveDialog({defaultPath: file.fileName.trim().replace(/\0/g, '') },function(fileNames){
+					if(!fileNames){
+						return false;
+					}
+					fs.writeFileSync(fileNames, buffer);
+				})
 
-			})
+			});
 		},
-		handleNodeClick(data) {
-			console.log('data:', data);
-		},
+
 		loadNode1(node, resolve) {
-			console.log(node);
 			if (node.level === 0) {
 			  return resolve(node.data);
 			}
 
-			if (node.level > 1) return resolve([]);
-
-
 			resolve(node.data.files);
-
-		},
-		openFile() {
-			var me = this;
-
-			dialog.showOpenDialog({ properties: ['openDirectory'] }, function (fileNames) {
-
-				if(fileNames.length < 1){
-					return false;
-				}
-				let directory = fileNames[0];
-
-
-				fs.readdir(directory, function (err, data) {
-					if (err) return console.log(err)
-						console.log(data);
-
-					let key = data.find(function (row) {
-						return row === 'chitin.key';
-					})
-
-					if (!key) {
-						console.log('invalid directory');
-						return false;
-					}
-
-					let game = data.find(function (row) {
-						return row === 'swkotor2.ini';
-					});
-
-					if (game === 'swkotor2.ini') {
-						me.tslPath = directory;
-					}
-					else {
-						me.k1Path = directory;
-					}
-					me.parseChitinKey(directory);
-				})
-			})
 		},
 
 		parseChitinKey (directory) {
 			var me = this;
 
-			fs.open(directory + '/chitin.key', 'r', function(err, fd){
-				if(err){
-					throw new Error(err);
-				}
-				me.chitinHeader = me.readChitinHeader(fd);
-				var bifFiles = me.parseBifFileDataInChitin(fd, me.chitinHeader);
-				bifFiles = me.parseTableOfKeys(fd, me.chitinHeader, bifFiles, me.fileExtensionLookup);
-				console.log(bifFiles);
-				me.bifFiles = bifFiles;
-					// .then(me.organizeTree)
-					// .then(function(){
-					// 	console.log(me.bifFiles);
-					// });
-			})
+			var fd = fs.openSync(directory + '/chitin.key', 'r');
 
+			me.chitinHeader = me.readChitinHeader(fd);
+			var bifFiles = me.parseBifFileDataInChitin(fd, me.chitinHeader);
+			bifFiles = me.parseTableOfKeys(fd, me.chitinHeader, bifFiles, me.fileExtensionLookup);
+
+			return bifFiles;
 		},
 
-		//TODO: This function should loop over all files and
-		//depending on the number of items in each tree it should split them
-		//into smaller and smaller categories.
-		//First file extension
-		//Then alphabetically
-		organizeTree(){
-			return true;
-		},
 
 		readChitinHeader (fd) {
 			var me = this;
@@ -288,9 +285,10 @@ export default {
 
 				var fileName = filenameBuffer.toString();
 				bif.bif_filename = fileName;
-				bif.fileName = fileName;
+				bif.fileName = fileName.replace("data\\", '');
 
 				bifFiles.push(bif);
+
 			}
 
 			return bifFiles;
@@ -298,6 +296,7 @@ export default {
 
 
 		parseTableOfKeys(fd, chitinHeader, bifFiles, fileExtensionLookup){
+			var me = this;
 			for (let i = 0; i < chitinHeader.number_of_entries_in_chitin_key; i++) {
 				let buffer = new Buffer(22);
 				fs.readSync(fd, buffer, 0, 22, chitinHeader.offset_to_table_of_keys + (i * 22));
@@ -306,7 +305,8 @@ export default {
 					resref: buffer.toString('utf8', 0, 16),
 					file_extension_code: buffer.readUInt16LE(16),
 					uniqueId: buffer.readUInt32LE(18),
-					leaf: false
+					leaf: true,
+					game: me.currentGame
 				};
 
 				file.bifIndex = file.uniqueId >> 20
@@ -320,8 +320,27 @@ export default {
 				if(!bifFiles[file.bifIndex].files) bifFiles[file.bifIndex].files = [];
 
 				bifFiles[file.bifIndex].files.push(file);
-
 			}
+
+			bifFiles.forEach(function(ele){
+				if(ele.files.length >= 100){
+					var sorted = {};
+					ele.files.forEach(function(file){
+						if(!sorted[file.fileExtension]){
+							sorted[file.fileExtension] = [];
+						}
+						sorted[file.fileExtension].push(file);
+					})
+
+					var files = [];
+					for(var key in sorted ){
+						files.push({files: sorted[key], fileName: key});
+					}
+
+					ele.files = files;
+				}
+
+			})
 
 			return bifFiles;
 		}
@@ -330,4 +349,38 @@ export default {
 }
 </script>
 
-<style></style>
+<style>
+
+body{
+	margin: 0;
+}
+h1{
+	top: 15px;
+	position: absolute;
+	margin: 0;
+	right: 20px;
+	text-align: center;
+	font-family: "Helvetica Neue",Helvetica;
+	font-weight: 100;
+	color:white;
+}
+
+.el-tree{
+	width: calc(100% - 100px);
+	height: 100%;
+}
+
+.el-header{
+	background-color: #333333;
+	margin-bottom: 5px;
+	padding-top: 10px;
+}
+
+.el-aside{
+	width: 100px !important;
+	top: 20%;
+	display: inline-block;
+	right: 0;
+	position: fixed;
+}
+</style>
