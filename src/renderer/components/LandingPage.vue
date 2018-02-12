@@ -1,9 +1,18 @@
 <template>
-	<div id="wrapper">
-		<main>
-			<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
-		</main>
-	</div>
+	<el-container>
+		<el-header>
+			<el-button @click="goToPaths()" type="primary">Paths</el-button>
+			<h1>
+				Revan Editor
+			</h1>
+		</el-header>
+
+		<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText"></el-tree>
+
+		<el-aside>
+			<el-button @click="extractBif()" type="primary">Export</el-button>
+		</el-aside>
+	</el-container>
 </template>
 
 <script>
@@ -42,11 +51,15 @@ export default {
 		var tsl = {fileName:'TSL', files:[]};
 
 		if(me.kotorPath){
+			me.currentGame = "k1";
 			kotor.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.kotorPath, 'KotOR') });
 		}
 		if(me.tslPath){
+			me.currentGame = "tsl";
 			tsl.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.tslPath, 'TSL') });
 		}
+
+		me.currentGame = "";
 
 		bifFiles.push(kotor);
 		bifFiles.push(tsl);
@@ -61,6 +74,7 @@ export default {
 			filePath: "",
 			kotorPath: "",
 			tslPath: "",
+			currentGame: "",
 			treeProps: {
 				children: 'files',
 				label: 'fileName',
@@ -160,6 +174,10 @@ export default {
 		};
 	},
 	methods: {
+		goToPaths(){
+			this.$router.push('GameSelection');
+		},
+
 		extractBif(){
 			var me = this;
 			var file = me.$refs.fileTree.getCurrentNode();
@@ -171,7 +189,14 @@ export default {
 				return false;
 			}
 
-			fs.open(me.k1Path + "/" + me.bifFiles[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r', function(err, fd){
+			var path = me.kotorPath;
+			var index = 0;
+			if(file.game === "tsl"){
+				path = me.tslPath;
+				index = 1;
+			}
+
+			fs.open(path + "/" + me.bifFiles[index].files[0].files[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r', function(err, fd){
 				if(err){
 					throw new Error(err);
 				}
@@ -198,13 +223,11 @@ export default {
 				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
 				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
 
-				fs.writeFileSync(me.k1Path + "/"+ file.fileName.trim().replace(/\0/g, ''), buffer);
+				fs.writeFileSync(path + "/"+ file.fileName.trim().replace(/\0/g, ''), buffer);
 
 			});
 		},
-		handleNodeClick(data) {
-			console.log('data:', data);
-		},
+
 		loadNode1(node, resolve) {
 			if (node.level === 0) {
 			  return resolve(node.data);
@@ -217,44 +240,6 @@ export default {
 
 			resolve(node.data.files);
 
-		},
-		openFile() {
-			var me = this;
-
-			dialog.showOpenDialog({ properties: ['openDirectory'] }, function (fileNames) {
-
-				if(!fileNames || fileNames.length < 1){
-					return false;
-				}
-
-				let directory = fileNames[0];
-
-				fs.readdir(directory, function (err, data) {
-					if (err) return console.log(err)
-						console.log(data);
-
-					let key = data.find(function (row) {
-						return row === 'chitin.key';
-					})
-
-					if (!key) {
-						console.log('invalid directory');
-						return false;
-					}
-
-					let game = data.find(function (row) {
-						return row === 'swkotor2.ini';
-					});
-
-					if (game === 'swkotor2.ini') {
-						me.tslPath = directory;
-					}
-					else {
-						me.k1Path = directory;
-					}
-					me.parseChitinKey(directory);
-				})
-			})
 		},
 
 		parseChitinKey (directory) {
@@ -317,6 +302,7 @@ export default {
 
 
 		parseTableOfKeys(fd, chitinHeader, bifFiles, fileExtensionLookup){
+			var me = this;
 			for (let i = 0; i < chitinHeader.number_of_entries_in_chitin_key; i++) {
 				let buffer = new Buffer(22);
 				fs.readSync(fd, buffer, 0, 22, chitinHeader.offset_to_table_of_keys + (i * 22));
@@ -325,7 +311,8 @@ export default {
 					resref: buffer.toString('utf8', 0, 16),
 					file_extension_code: buffer.readUInt16LE(16),
 					uniqueId: buffer.readUInt32LE(18),
-					leaf: true
+					leaf: true,
+					game: me.currentGame
 				};
 
 				file.bifIndex = file.uniqueId >> 20
@@ -369,4 +356,38 @@ export default {
 }
 </script>
 
-<style></style>
+<style>
+
+body{
+	margin: 0;
+}
+h1{
+	top: 15px;
+position: absolute;
+margin: 0;
+right: 20px;
+text-align: center;
+font-family: "Helvetica Neue",Helvetica;
+font-weight: 100;
+color:white;
+}
+
+.el-tree{
+	width: calc(100% - 100px);
+	height: 100%;
+}
+
+.el-header{
+	background-color: #333333;
+	margin-bottom: 5px;
+	padding-top: 10px;
+}
+
+.el-aside{
+	width: 100px !important;
+	top: 20%;
+	display: inline-block;
+	right: 0;
+	position: fixed;
+}
+</style>
