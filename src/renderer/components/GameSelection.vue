@@ -1,71 +1,156 @@
 <template>
 	<div id="wrapper">
 		<main>
-            <h1>
-                Revan Editor
-            </h1>
-            <br />
-            <p>Please select the games' directories:</p>
-            <el-form :model="dynamicValidateForm" ref="dynamicValidateForm" label-width="120px" class="demo-dynamic">
-              <el-form-item style="margin-right: 40px;" prop="email" label="KotOR Path">
-                <el-input v-model="dynamicValidateForm.email">
-                    <template slot="append">...</template>
-                </el-input>
-              </el-form-item>
-              <el-form-item style="margin-right: 40px;" prop="email" label="TSL Path">
-                <el-input v-model="dynamicValidateForm.email">
-                    <template slot="append">...</template>
-                </el-input>
-              </el-form-item>
+			<h1>
+				Revan Editor
+			</h1>
+			<br />
+			<p>Please select the games' directories:</p>
+			<el-form label-width="120px" class="demo-dynamic">
+			  <el-form-item style="margin-right: 40px;" prop="kotorPath"  label="KotOR Path">
+				<el-input disabled v-model="kotorPath">
+					<el-button slot="append" @click="browse('kotor')">...</el-button>
+				</el-input>
+			  </el-form-item>
+			  <el-form-item style="margin-right: 40px;" prop="tslPath" label="TSL Path">
+				<el-input disabled v-model="tslPath">
+					<el-button @click="browse('tsl')" slot="append">...</el-button>
+				</el-input>
+			  </el-form-item>
 
-              <el-form-item>
-                <el-button type="primary" @click="submitForm('dynamicValidateForm')">Save</el-button>
-              </el-form-item>
-            </el-form>
+			  <el-form-item>
+				<el-button type="primary" @click="save()">Save</el-button>
+			  </el-form-item>
+			</el-form>
 		</main>
 	</div>
 </template>
 
 <script>
 
-const electron = require('electron');
+const electron = require('electron')
 const fs = require('fs');
 
 const dialog = electron.remote.dialog;
+const app = electron.remote.app;
+import path from 'path'
+console.log(path)
 
 export default {
 	name: 'landing-page',
 	data:function(){
 		return {
-            dynamicValidateForm: {
-          domains: [{
-            key: 1,
-            value: ''
-          }],
-          email: ''
-        }
-		};
+			kotorPath: "",
+			tslPath: "",
+			filePath: "",
+		}
 	},
 	methods: {
-    }
+		browse: function(game){
+			var me = this;
+			dialog.showOpenDialog({ properties: ['openDirectory'], title: 'Please select the directory for ' + game },
+				function (fileNames) {
+					if(!fileNames || fileNames.length < 1){
+						return false;
+					}
+
+					let directory = fileNames[0];
+
+					if(game==='tsl'){
+						fs.readdir(directory, function (err, data) {
+							if (err) return console.log(err)
+								console.log(data);
+
+							let key = data.find(function (row) {
+								return row === 'chitin.key';
+							})
+
+							if (!key) {
+								console.log('invalid directory');
+								return false;
+							}
+
+							let game = data.find(function (row) {
+								return row === 'swkotor2.ini';
+							});
+
+							if (game !== 'swkotor2.ini') {
+								console.log('invalid directory: k1 as k2');
+								return false;
+							}
+
+							me.tslPath = directory;
+						});
+					}
+					else{
+						fs.readdir(directory, function (err, data) {
+							if (err) return console.log(err)
+								console.log(data);
+
+							let key = data.find(function (row) {
+								return row === 'chitin.key';
+							})
+
+							if (!key) {
+								console.log('invalid directory');
+								return false;
+							}
+
+							let game = data.find(function (row) {
+								return row === 'swkotor2.ini';
+							});
+
+							if (game === 'swkotor2.ini') {
+								console.log('invalid directory: k2 as k1');
+								return false;
+							}
+
+							me.kotorPath = directory;
+						});
+					}
+				}
+			);
+
+		},
+		save: function(){
+			var me = this;
+			fs.writeFileSync(me.filePath, JSON.stringify({kotorPath:me.kotorPath, tslPath:me.tslPath}) );
+
+			this.$router.push('/');
+		}
+	},
+	created: function () {
+		var me = this;
+
+		me.filePath = path.join(app.getPath("userData"), '/RevanEditorPreferences.json');
+
+		if( !fs.existsSync(me.filePath) ){
+			fs.writeFileSync(me.filePath, JSON.stringify({kotorPath:"", tslPath:""}) );
+		}
+		else{
+			var json = JSON.parse(fs.readFileSync(me.filePath) );
+			me.kotorPath = json.kotorPath;
+			me.tslPath = json.tslPath;
+		}
+	},
 }
 </script>
 
 <style>
 h1{
 
-    font-size: 50px;
-    font-weight: 100;
-    width: 100%;
-    text-align: center;
+	font-size: 50px;
+	font-weight: 100;
+	width: 100%;
+	text-align: center;
 
 }
 p{
-    font-weight: 300;
-    margin-left: 30px;
+	font-weight: 300;
+	margin-left: 30px;
 }
 p, h1{
-    font-family: "Helvetica Neue",Helvetica;
+	font-family: "Helvetica Neue",Helvetica;
 
 }
 </style>
