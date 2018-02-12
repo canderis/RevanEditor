@@ -34,7 +34,6 @@ const fs = require('fs');
 const dialog = electron.remote.dialog;
 const app = electron.remote.app;
 import path from 'path'
-console.log(path)
 
 export default {
 	name: 'landing-page',
@@ -59,7 +58,6 @@ export default {
 					if(game==='tsl'){
 						fs.readdir(directory, function (err, data) {
 							if (err) return console.log(err)
-								console.log(data);
 
 							let key = data.find(function (row) {
 								return row === 'chitin.key';
@@ -84,8 +82,7 @@ export default {
 					}
 					else{
 						fs.readdir(directory, function (err, data) {
-							if (err) return console.log(err)
-								console.log(data);
+							if (err) return console.log(err);
 
 							let key = data.find(function (row) {
 								return row === 'chitin.key';

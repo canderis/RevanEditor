@@ -33,7 +33,6 @@ export default {
 		me.filePath = path.join(app.getPath("userData"), '/RevanEditorPreferences.json');
 
 		if(!fs.existsSync(me.filePath)){
-			console.log('file Does not Exist fammm');
 			me.$router.push('GameSelection');
 			return;
 		}
@@ -41,7 +40,6 @@ export default {
 		me.kotorPath = json.kotorPath;
 		me.tslPath = json.tslPath;
 		if(!me.kotorPath && !me.tslPath){
-			console.log('no directories fammm');
 			me.$router.push('GameSelection');
 			return;
 		}
@@ -64,7 +62,6 @@ export default {
 		bifFiles.push(kotor);
 		bifFiles.push(tsl);
 
-		console.log(bifFiles);
 		me.bifFiles = bifFiles;
 	},
 
@@ -182,8 +179,6 @@ export default {
 			var me = this;
 			var file = me.$refs.fileTree.getCurrentNode();
 
-			console.log("file", file);
-
 			if(!file || file.leaf === undefined){
 				console.log("select a file");
 				return false;
@@ -223,7 +218,12 @@ export default {
 				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
 				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
 
-				fs.writeFileSync(path + "/"+ file.fileName.trim().replace(/\0/g, ''), buffer);
+				dialog.showSaveDialog({defaultPath: file.fileName.trim().replace(/\0/g, '') },function(fileNames){
+					if(!fileNames){
+						return false;
+					}
+					fs.writeFileSync(fileNames, buffer);
+				})
 
 			});
 		},
@@ -233,13 +233,7 @@ export default {
 			  return resolve(node.data);
 			}
 
-			console.log(node);
-
-			//if (node.level < 0) return resolve([]);
-
-
 			resolve(node.data.files);
-
 		},
 
 		parseChitinKey (directory) {
@@ -348,7 +342,6 @@ export default {
 
 			})
 
-			console.log(bifFiles);
 			return bifFiles;
 		}
 
@@ -363,13 +356,13 @@ body{
 }
 h1{
 	top: 15px;
-position: absolute;
-margin: 0;
-right: 20px;
-text-align: center;
-font-family: "Helvetica Neue",Helvetica;
-font-weight: 100;
-color:white;
+	position: absolute;
+	margin: 0;
+	right: 20px;
+	text-align: center;
+	font-family: "Helvetica Neue",Helvetica;
+	font-weight: 100;
+	color:white;
 }
 
 .el-tree{
