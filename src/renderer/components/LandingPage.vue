@@ -1,10 +1,6 @@
 <template>
 	<div id="wrapper">
 		<main>
-			<el-button type="primary" @click="openFile()">Open Key</el-button>
-			<el-button type="primary" @click="extractBif()">Extract File</el-button>
-
-
 			<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText" @node-click="handleNodeClick"></el-tree>
 		</main>
 	</div>
@@ -23,16 +19,43 @@ import path from 'path'
 export default {
 	name: 'landing-page',
 	created: function () {
-		if(!fs.existsSync(path.join(app.getPath("userData"), '/RevanEditorPreferences.json'))){
-			console.log('file Does not Exist fammm')
-			this.$router.push('GameSelection')
+		var me = this;
+		me.filePath = path.join(app.getPath("userData"), '/RevanEditorPreferences.json');
+
+		if(!fs.existsSync(me.filePath)){
+			console.log('file Does not Exist fammm');
+			me.$router.push('GameSelection');
+			return;
 		}
+		var json = JSON.parse(fs.readFileSync(me.filePath) );
+		me.kotorPath = json.kotorPath;
+		me.tslPath = json.tslPath;
+		if(!me.kotorPath && !me.tslPath){
+			console.log('no directories fammm');
+			me.$router.push('GameSelection');
+			return;
+		}
+		var bifFiles = [];
+		var kotor = {fileName:'KotOR'};
+		var tsl = {fileName:'TSL'};
+		if(me.kotorPath){
+			kotor.files = me.parseChitinKey(me.kotorPath, 'KotOR');
+		}
+		if(me.tslPath){
+			console.log('bleh');
+			tsl.files = me.parseChitinKey(me.tslPath, 'TSL');
+		}
+		bifFiles.push(kotor);
+		bifFiles.push(tsl);
+
+		me.bifFiles = bifFiles;
 	},
 
 	data:function(){
 		return {
 			emptyText: "Please open a key",
-			k1Path: "",
+			filePath: "",
+			kotorPath: "",
 			tslPath: "",
 			treeProps: {
 				children: 'files',
@@ -232,17 +255,13 @@ export default {
 		parseChitinKey (directory) {
 			var me = this;
 
-			fs.open(directory + '/chitin.key', 'r', function(err, fd){
-				if(err){
-					throw new Error(err);
-				}
-				me.chitinHeader = me.readChitinHeader(fd);
-				var bifFiles = me.parseBifFileDataInChitin(fd, me.chitinHeader);
-				bifFiles = me.parseTableOfKeys(fd, me.chitinHeader, bifFiles, me.fileExtensionLookup);
-				console.log(bifFiles);
-				me.bifFiles = bifFiles;
-			})
+			var fd = fs.openSync(directory + '/chitin.key', 'r');
 
+			me.chitinHeader = me.readChitinHeader(fd);
+			var bifFiles = me.parseBifFileDataInChitin(fd, me.chitinHeader);
+			bifFiles = me.parseTableOfKeys(fd, me.chitinHeader, bifFiles, me.fileExtensionLookup);
+
+			return bifFiles;
 		},
 
 		//TODO: This function should loop over all files and
