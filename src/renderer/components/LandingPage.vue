@@ -14,6 +14,7 @@ const fs = require('fs');
 const dialog = electron.remote.dialog;
 const app = electron.remote.app;
 import path from 'path'
+const _ = require('lodash');
 
 
 export default {
@@ -35,19 +36,22 @@ export default {
 			me.$router.push('GameSelection');
 			return;
 		}
+
 		var bifFiles = [];
-		var kotor = {fileName:'KotOR'};
-		var tsl = {fileName:'TSL'};
+		var kotor = {fileName:'KotOR', files:[]};
+		var tsl = {fileName:'TSL', files:[]};
+
 		if(me.kotorPath){
-			kotor.files = me.parseChitinKey(me.kotorPath, 'KotOR');
+			kotor.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.kotorPath, 'KotOR') });
 		}
 		if(me.tslPath){
-			console.log('bleh');
-			tsl.files = me.parseChitinKey(me.tslPath, 'TSL');
+			tsl.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.tslPath, 'TSL') });
 		}
+
 		bifFiles.push(kotor);
 		bifFiles.push(tsl);
 
+		console.log(bifFiles);
 		me.bifFiles = bifFiles;
 	},
 
@@ -196,18 +200,19 @@ export default {
 
 				fs.writeFileSync(me.k1Path + "/"+ file.fileName.trim().replace(/\0/g, ''), buffer);
 
-			})
+			});
 		},
 		handleNodeClick(data) {
 			console.log('data:', data);
 		},
 		loadNode1(node, resolve) {
-			console.log(node);
 			if (node.level === 0) {
 			  return resolve(node.data);
 			}
 
-			if (node.level > 1) return resolve([]);
+			console.log(node);
+
+			//if (node.level < 0) return resolve([]);
 
 
 			resolve(node.data.files);
@@ -264,14 +269,6 @@ export default {
 			return bifFiles;
 		},
 
-		//TODO: This function should loop over all files and
-		//depending on the number of items in each tree it should split them
-		//into smaller and smaller categories.
-		//First file extension
-		//Then alphabetically
-		organizeTree(){
-			return true;
-		},
 
 		readChitinHeader (fd) {
 			var me = this;
@@ -309,9 +306,10 @@ export default {
 
 				var fileName = filenameBuffer.toString();
 				bif.bif_filename = fileName;
-				bif.fileName = fileName;
+				bif.fileName = fileName.replace("data\\", '');
 
 				bifFiles.push(bif);
+
 			}
 
 			return bifFiles;
@@ -327,7 +325,7 @@ export default {
 					resref: buffer.toString('utf8', 0, 16),
 					file_extension_code: buffer.readUInt16LE(16),
 					uniqueId: buffer.readUInt32LE(18),
-					leaf: false
+					leaf: true
 				};
 
 				file.bifIndex = file.uniqueId >> 20
@@ -343,6 +341,27 @@ export default {
 				bifFiles[file.bifIndex].files.push(file);
 			}
 
+			bifFiles.forEach(function(ele){
+				if(ele.files.length >= 100){
+					var sorted = {};
+					ele.files.forEach(function(file){
+						if(!sorted[file.fileExtension]){
+							sorted[file.fileExtension] = [];
+						}
+						sorted[file.fileExtension].push(file);
+					})
+
+					var files = [];
+					for(var key in sorted ){
+						files.push({files: sorted[key], fileName: key});
+					}
+
+					ele.files = files;
+				}
+
+			})
+
+			console.log(bifFiles);
 			return bifFiles;
 		}
 
