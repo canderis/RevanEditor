@@ -220,7 +220,7 @@ export default {
 
 		extractErf( file, path, gameIndex ) {
 			var me = this;
-			console.log(file);
+
 			var resoucePath = me.bifFiles[gameIndex].files[1];
 
 			var index = _.findIndex(resoucePath, 'fileName', file.erfFileName);
@@ -411,7 +411,7 @@ export default {
 			fs.readSync(fd, buf, 0, erf.header.entry_count * (me.erf_sizes.key + me.erf_sizes.resource), erf.header.offset_to_key_list);
 			erf.files = me.read_erf_resources(buf, erf, fileName);
 			erf.leaf = false;
-			console.log(erf);
+
 			fs.closeSync(fd);
 			return erf;
 		},
