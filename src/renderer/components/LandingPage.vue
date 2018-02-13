@@ -10,7 +10,7 @@
 		<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText"></el-tree>
 
 		<el-aside>
-			<el-button @click="extractBif()" type="primary">Export</el-button>
+			<el-button @click="extract()" type="primary">Export</el-button>
 		</el-aside>
 	</el-container>
 </template>
@@ -86,9 +86,9 @@ export default {
 			},
 			bifFiles: [],
 			fileExtensionLookup: {
-				'0':    {fileExtension: 'res', editors:[]},
 				'1':    {fileExtension: 'bmp', editors:[]},
 				'3':    {fileExtension: 'tga', editors:[]},
+				'0':    {fileExtension: 'res', editors:[]},
 				'4':    {fileExtension: 'wav', editors:[]},
 				'6':    {fileExtension: 'plt', editors:[]},
 				'7':    {fileExtension: 'ini', editors:[]},
@@ -182,7 +182,7 @@ export default {
 			this.$router.push('GameSelection');
 		},
 
-		extractBif(){
+		extract(){
 			var me = this;
 			var file = me.$refs.fileTree.getCurrentNode();
 
@@ -198,48 +198,75 @@ export default {
 				index = 1;
 			}
 
-			fs.open(path + "/" + me.bifFiles[index].files[0].files[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r', function(err, fd){
-				if(err){
-					throw new Error(err);
+			dialog.showSaveDialog({defaultPath: file.fileName.trim().replace(/\0/g, '') }, function(fileNames){
+				if(!fileNames){
+					return false;
 				}
 
-				var buffer = new Buffer(20);
-				fs.readSync(fd, buffer, 0, 20, 0 );
+				var buffer;
 
-				var bifHeader = {
-					number_of_variable_resources: buffer.readUInt32LE(8),
-					number_of_fixed_resouces: buffer.readUInt32LE(12),
-					offset_to_variable_resouces: buffer.readUInt32LE(16)
-				};
+				if(file.extractionType === 'erf'){
+					buffer = me.extractErf(file, path, index);
+				}
+				else{
+					buffer = me.extractBif(file, path, index);
+				}
+
+				fs.writeFileSync(fileNames, buffer);
+			})
 
 
-				buffer = new Buffer(16);
-				fs.readSync(fd, buffer, 0, 16, bifHeader.offset_to_variable_resouces + 16*file.indexOfFileInBif );
-				var variableTable = {
-					id: buffer.readUInt32LE(0),
-					offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
-					size_of_raw_data_chunk: buffer.readUInt32LE(8),
-					resource_type: buffer.readUInt32LE(12)
-				};
+		},
 
-				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
-				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
+		extractErf( file, path, gameIndex ) {
+			var me = this;
+			console.log(file);
+			var resoucePath = me.bifFiles[gameIndex].files[1];
 
-				dialog.showSaveDialog({defaultPath: file.fileName.trim().replace(/\0/g, '') },function(fileNames){
-					if(!fileNames){
-						return false;
-					}
-					fs.writeFileSync(fileNames, buffer);
-				})
+			var index = _.findIndex(resoucePath, 'fileName', file.erfFileName);
 
-			});
+			var fd = fs.openSync(path + "/" + "TexturePacks/" + file.erfFileName, 'r');
+
+			let buf = new Buffer(file.size);
+			fs.readSync( fd, buf, 0, file.size, file.offset );
+			return buf;
+		},
+
+		extractBif( file, path, index ){
+			var me = this;
+
+			var fd = fs.openSync(path + "/" + me.bifFiles[index].files[0].files[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r');
+
+			var buffer = new Buffer(20);
+			fs.readSync(fd, buffer, 0, 20, 0 );
+
+			var bifHeader = {
+				number_of_variable_resources: buffer.readUInt32LE(8),
+				number_of_fixed_resouces: buffer.readUInt32LE(12),
+				offset_to_variable_resouces: buffer.readUInt32LE(16)
+			};
+
+
+			buffer = new Buffer(16);
+			fs.readSync(fd, buffer, 0, 16, bifHeader.offset_to_variable_resouces + 16*file.indexOfFileInBif );
+			var variableTable = {
+				id: buffer.readUInt32LE(0),
+				offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
+				size_of_raw_data_chunk: buffer.readUInt32LE(8),
+				resource_type: buffer.readUInt32LE(12)
+			};
+
+			buffer = new Buffer(variableTable.size_of_raw_data_chunk);
+			fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
+
+			return buffer;
+
 		},
 
 		loadNode1(node, resolve) {
 			if (node.level === 0) {
 			  return resolve(node.data);
 			}
-
 			resolve(node.data.files);
 		},
 
@@ -356,20 +383,19 @@ export default {
 			var data = fs.readdirSync(directory + '/TexturePacks');
 			var erfs = [];
 			data.forEach(function(fileName){
-				erfs.push(me.read_erf_file(directory + '/TexturePacks/' + fileName));
+				erfs.push(me.read_erf_file(directory + '/TexturePacks/', fileName));
 			});
 
-			console.log(erfs);
-
+			return erfs;
 		},
 
-		read_erf_file(filename) {
+		read_erf_file(directory, fileName) {
 			let me = this;
 			let erf = {};
-			let fd = fs.openSync(filename, 'r');
+			let fd = fs.openSync(directory + fileName, 'r');
 			let buf = new Buffer(me.erf_sizes.header);
 			fs.readSync(fd, buf, 0, me.erf_sizes.header);
-			erf.filename = filename;
+			erf.fileName = fileName;
 			erf.header = me.read_erf_header(buf);
 			if (erf.header.language_count) {
 				//buf = new Buffer(erf.header.offset_to_key_list - erf.header.offset_to_localized_string);
@@ -383,7 +409,8 @@ export default {
 			}
 			buf = new Buffer(erf.header.entry_count * (me.erf_sizes.key + me.erf_sizes.resource));
 			fs.readSync(fd, buf, 0, erf.header.entry_count * (me.erf_sizes.key + me.erf_sizes.resource), erf.header.offset_to_key_list);
-			erf.resources = me.read_erf_resources(buf, erf);
+			erf.files = me.read_erf_resources(buf, erf, fileName);
+			erf.leaf = false;
 			console.log(erf);
 			fs.closeSync(fd);
 			return erf;
@@ -421,23 +448,27 @@ export default {
 			if (s.charCodeAt(s.length - 1) === 0) {
 				s = s.slice(0, -1);
 			}
-			console.log(s);
 			return str;
 		},
 
-		read_erf_resources(buf, erf) {
-			let keys = {};
+		read_erf_resources(buf, erf, fileName) {
+			let keys = [];
 			for (let i = 0; i < erf.header.entry_count; i++) {
 				let key = {};
 				let keypos = i * this.erf_sizes.key;
-				key.filename = buf.slice(keypos, keypos + 16).toString().replace(/\0+$/, '');
+				key.fileName = buf.slice(keypos, keypos + 16).toString().replace(/\0+$/, '');
 				key.res_id = buf.readUInt32LE(keypos + 16, keypos + 20);
 				key.res_type = this.fileExtensionLookup[buf.readUInt16LE(keypos + 20, keypos + 22)].fileExtension;
 				let res = {};
 				let respos = erf.header.entry_count * this.erf_sizes.key + (i * this.erf_sizes.resource);
 				res.offset = buf.readUInt32LE(respos, respos + 4);
 				res.size = buf.readUInt32LE(respos + 4, respos + 8);
-				keys[key.filename + '.' + key.res_type] = res;
+				res.fileName = key.fileName + '.' + key.res_type;
+				res.leaf = true;
+				res.extractionType = 'erf';
+				res.erfFileName = fileName;
+				//keys[key.filename + '.' + key.res_type] = res;
+				keys.push(res);
 			}
 			return keys;
 		}
