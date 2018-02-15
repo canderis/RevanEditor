@@ -365,10 +365,35 @@ export default {
 						sorted[file.fileExtension].push(file);
 					})
 
+
+					//_.forEach(sorted, function(resourceType){
+					for(var resourceTypeKey in sorted){
+						if(sorted[resourceTypeKey].length >= 100){
+							//alphabetize
+							var alphabetized = {};
+							sorted[resourceTypeKey].forEach( function(file){
+								var letterKey = file.fileName.charAt(0);
+								if(!alphabetized[letterKey]){
+									alphabetized[letterKey] = [];
+								}
+								alphabetized[letterKey].push(file);
+							});
+
+							var alphabetizedFiles = [];
+							for(var key in alphabetized ){
+								alphabetizedFiles.push({files: alphabetized[key], fileName: key + ' (' + alphabetized[key].length + ')'});
+							}
+
+							sorted[resourceTypeKey] = alphabetizedFiles;
+						}
+					}
+
 					var files = [];
 					for(var key in sorted ){
 						files.push({files: sorted[key], fileName: key});
 					}
+
+
 
 					ele.files = files;
 				}
@@ -385,6 +410,8 @@ export default {
 			data.forEach(function(fileName){
 				erfs.push(me.read_erf_file(directory + '/TexturePacks/', fileName));
 			});
+
+
 
 			return erfs;
 		},
@@ -413,6 +440,25 @@ export default {
 			erf.leaf = false;
 
 			fs.closeSync(fd);
+
+			if(erf.files.length >= 100 ){
+				//alphabetize
+				var alphabetized = {};
+				erf.files.forEach( function(file){
+					var letterKey = file.fileName.charAt(0).toUpperCase();
+					if(!alphabetized[letterKey]){
+						alphabetized[letterKey] = [];
+					}
+					alphabetized[letterKey].push(file);
+				});
+
+				var alphabetizedFiles = [];
+				for(var key in alphabetized ){
+					alphabetizedFiles.push({files: alphabetized[key], fileName: key + ' (' + alphabetized[key].length + ')'});
+				}
+
+				erf.files = alphabetizedFiles;
+			}
 			return erf;
 		},
 
