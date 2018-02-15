@@ -441,7 +441,6 @@ export default {
 
 			fs.closeSync(fd);
 
-			console.log(erf);
 			if(erf.files.length >= 100 ){
 				//alphabetize
 				var alphabetized = {};
