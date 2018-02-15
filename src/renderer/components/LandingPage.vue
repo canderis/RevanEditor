@@ -386,7 +386,7 @@ export default {
 
 							sorted[resourceTypeKey] = alphabetizedFiles;
 						}
-					};
+					}
 
 					var files = [];
 					for(var key in sorted ){
@@ -410,6 +410,8 @@ export default {
 			data.forEach(function(fileName){
 				erfs.push(me.read_erf_file(directory + '/TexturePacks/', fileName));
 			});
+
+
 
 			return erfs;
 		},
@@ -438,6 +440,26 @@ export default {
 			erf.leaf = false;
 
 			fs.closeSync(fd);
+
+			console.log(erf);
+			if(erf.files.length >= 100 ){
+				//alphabetize
+				var alphabetized = {};
+				erf.files.forEach( function(file){
+					var letterKey = file.fileName.charAt(0).toUpperCase();
+					if(!alphabetized[letterKey]){
+						alphabetized[letterKey] = [];
+					}
+					alphabetized[letterKey].push(file);
+				});
+
+				var alphabetizedFiles = [];
+				for(var key in alphabetized ){
+					alphabetizedFiles.push({files: alphabetized[key], fileName: key + ' (' + alphabetized[key].length + ')'});
+				}
+
+				erf.files = alphabetizedFiles;
+			}
 			return erf;
 		},
 
