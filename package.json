@@ -1,5 +1,5 @@
 {
-  "name": "revaneditor",
+  "name": "RevanEditor",
   "version": "0.0.0",
   "author": "Scott Huffman <scott@shuffman.com>",
   "description": "Modding Tool for KOTOR/TSL",
@@ -17,7 +17,7 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "revaneditor",
+    "productName": "Revan Editor",
     "appId": "org.simulatedgreg.electron-vue",
     "directories": {
       "output": "build"

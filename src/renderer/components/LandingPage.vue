@@ -25,7 +25,6 @@ const app = electron.remote.app;
 import path from 'path'
 const _ = require('lodash');
 
-
 export default {
 	name: 'landing-page',
 	created: function () {
@@ -198,7 +197,7 @@ export default {
 				index = 1;
 			}
 
-			dialog.showSaveDialog({defaultPath: file.fileName.trim().replace(/\0/g, '') }, function(fileNames){
+			dialog.showSaveDialog({defaultPath: file.fileName }, function(fileNames){
 				if(!fileNames){
 					return false;
 				}
@@ -319,7 +318,7 @@ export default {
 
 				var fileName = filenameBuffer.toString();
 				bif.bif_filename = fileName;
-				bif.fileName = fileName.replace("data\\", '');
+				bif.fileName = fileName.replace("data\\", '').trim().replace(/\0/g, '');
 
 				bifFiles.push(bif);
 
@@ -347,6 +346,8 @@ export default {
 
 				file.fileExtension = fileExtensionLookup[file.file_extension_code].fileExtension;
 				file.fileName = file.resref + "." + file.fileExtension;
+				file.fileName = file.fileName.trim().replace(/\0/g, '')
+
 
 				if(!bifFiles[file.bifIndex]) console.log('Error File!!!', file);
 

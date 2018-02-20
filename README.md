@@ -6,3 +6,4 @@ Credits:
 FairStrides for a ton of help decoding the files
 TK102 for providing info to FairStrides on the file formats
 ndix UR for advice and lots of code snippets
+Jtm at Thingiverse for the icon
