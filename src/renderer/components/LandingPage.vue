@@ -490,11 +490,11 @@ export default {
 			}
 			lang_id /= 2;
 			//TODO select an encoding based on language ID
-			let str_size = buf.readUInt32LE(4, 8);
-			let s = buf.slice(8, 8 + str_size);
-			if (s.charCodeAt(s.length - 1) === 0) {
-				s = s.slice(0, -1);
-			}
+			// let str_size = buf.readUInt32LE(4, 8);
+			// // let s = buf.slice(8, 8 + str_size);
+			// // if (s.charCodeAt(s.length - 1) === 0) {
+			// // 	s = s.slice(0, -1);
+			// // }
 			return str;
 		},
 
