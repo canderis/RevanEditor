@@ -34,7 +34,6 @@
     cursor: pointer;
 
     transition: background-color .3s;
-    box-sizing: content-box;
 
   }
 </style>
