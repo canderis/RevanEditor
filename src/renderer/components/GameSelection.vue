@@ -6,22 +6,22 @@
 			</h1>
 			<br />
 			<p>Please select the games' directories:</p>
-			<el-form label-width="120px" class="demo-dynamic">
-			  <el-form-item style="margin-right: 40px;" prop="kotorPath"  label="KotOR Path">
-				<el-input disabled v-model="kotorPath">
-					<el-button slot="append" @click="browse('kotor')">...</el-button>
-				</el-input>
-			  </el-form-item>
-			  <el-form-item style="margin-right: 40px;" prop="tslPath" label="TSL Path">
-				<el-input disabled v-model="tslPath">
-					<el-button @click="browse('tsl')" slot="append">...</el-button>
-				</el-input>
-			  </el-form-item>
+			<!-- <el-form label-width="120px" class="demo-dynamic"> -->
+			  <!-- <el-form-item style="margin-right: 40px;" prop="kotorPath"  label="KotOR Path"> -->
+				<input disabled v-model="kotorPath">
+					<button slot="append" @click="browse('kotor')">...</button>
+				</input>
+			  <!-- </el-form-item> -->
+			  <!-- <el-form-item style="margin-right: 40px;" prop="tslPath" label="TSL Path"> -->
+				<input disabled v-model="tslPath">
+					<button @click="browse('tsl')" slot="append">...</button>
+				</input>
+			  <!-- </el-form-item> -->
 
-			  <el-form-item>
-				<el-button type="primary" @click="save()">Save</el-button>
-			  </el-form-item>
-			</el-form>
+			  <!-- <el-form-item> -->
+				<button type="primary" @click="save()">Save</button>
+			  <!-- </el-form-item> -->
+			<!-- </el-form> -->
 		</main>
 	</div>
 </template>
