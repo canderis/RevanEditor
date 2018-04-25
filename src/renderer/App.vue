@@ -39,4 +39,8 @@
 
     transition: background-color .3s;
   }
+
+  li{
+      list-style-type: none;
+  }
 </style>

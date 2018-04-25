@@ -1,5 +1,5 @@
 <template>
-	<div class="main">
+	<div class="landing">
 		<header class="head">
 			<div class="setting-toolbar">
 				<button @click="goToPaths()" type="primary">Settings</button>
@@ -53,46 +53,42 @@
 				return;
 			}
 			var json = JSON.parse(fs.readFileSync(me.filePath) );
-			me.kotorPath = json.kotorPath;
-			me.tslPath = json.tslPath;
-			if(!me.kotorPath && !me.tslPath){
-				me.$router.push('GameSelection');
-				return;
-			}
 
-			var bifFiles = [];
-			var kotor = {fileName:'KotOR', files:[]};
-			var tsl = {fileName:'TSL', files:[]};
-
-			if(me.kotorPath){
-				console.log(new lotor.lotor(me.kotorPath, fs));
-				// console.log(new lotor.erf(me.kotorPath, fs));
-
-				//kotor.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.kotorPath) });
-				//kotor.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.kotorPath) });
-			}
-
-			if(me.tslPath){
-				//tsl.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.tslPath) });
-				//tsl.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.tslPath) });
-			}
-
-
-
-			bifFiles.push(kotor);
-			bifFiles.push(tsl);
-
-			me.bifFiles = bifFiles;
-
-			console.log(bifFiles)
+			me.directories = json;
+			console.log(me.directories);
+			//
+			// var bifFiles = [];
+			// var kotor = {fileName:'KotOR', files:[]};
+			// var tsl = {fileName:'TSL', files:[]};
+			//
+			// if(me.kotorPath){
+			// 	console.log(new lotor.lotor(me.kotorPath, fs));
+			// 	// console.log(new lotor.erf(me.kotorPath, fs));
+			//
+			// 	//kotor.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.kotorPath) });
+			// 	//kotor.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.kotorPath) });
+			// }
+			//
+			// if(me.tslPath){
+			// 	//tsl.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.tslPath) });
+			// 	//tsl.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.tslPath) });
+			// }
+			//
+			//
+			//
+			// bifFiles.push(kotor);
+			// bifFiles.push(tsl);
+			//
+			// me.bifFiles = bifFiles;
+			//
+			// console.log(bifFiles)
 		},
 
 		data:function(){
 			return {
 				emptyText: "Please open a key",
 				filePath: "",
-				kotorPath: "",
-				tslPath: "",
+				directories: [],
 				bifFiles:[],
 				selection:[],
 				transition: {
@@ -253,7 +249,7 @@
 <style>
 
 
-.main{
+.landing{
 	height: 100%;
 	display: grid;
 	grid-template-rows: 50px 10px 50px 1fr;
