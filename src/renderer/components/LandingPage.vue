@@ -35,8 +35,7 @@
 
 	import { TreeView } from "@bosket/vue"
 
-	const lotor = require('lotor');
-	console.log(lotor)
+	require('lotor');
 
 	export default {
 		name: 'landing-page',
@@ -55,33 +54,9 @@
 			var json = JSON.parse(fs.readFileSync(me.filePath) );
 
 			me.directories = json;
-			console.log(me.directories);
-			//
-			// var bifFiles = [];
-			// var kotor = {fileName:'KotOR', files:[]};
-			// var tsl = {fileName:'TSL', files:[]};
-			//
-			// if(me.kotorPath){
-			// 	console.log(new lotor.lotor(me.kotorPath, fs));
-			// 	// console.log(new lotor.erf(me.kotorPath, fs));
-			//
-			// 	//kotor.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.kotorPath) });
-			// 	//kotor.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.kotorPath) });
-			// }
-			//
-			// if(me.tslPath){
-			// 	//tsl.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.tslPath) });
-			// 	//tsl.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.tslPath) });
-			// }
-			//
-			//
-			//
-			// bifFiles.push(kotor);
-			// bifFiles.push(tsl);
-			//
-			// me.bifFiles = bifFiles;
-			//
-			// console.log(bifFiles)
+
+			me.games = me.loadGames();
+			console.log(me.games)
 		},
 
 		data:function(){
@@ -89,6 +64,7 @@
 				emptyText: "Please open a key",
 				filePath: "",
 				directories: [],
+				games:[],
 				bifFiles:[],
 				selection:[],
 				transition: {
@@ -188,6 +164,17 @@
 			};
 		},
 		methods: {
+			loadGames(){
+				var me = this;
+				var games = [];
+				me.directories.forEach(function(directory){
+					let game = lotor(directory.directory, fs);
+					if(game)
+						games.push(game)
+				})
+
+				return games;
+			},
 			goToPaths(){
 				this.$router.push('GameSelection');
 			},
@@ -231,17 +218,7 @@
 					fs.writeFileSync(fileNames, buffer);
 				})
 
-
 			},
-
-			loadNode1(node, resolve) {
-				if (node.level === 0) {
-				  return resolve(node.data);
-				}
-				resolve(node.data.files);
-			},
-
-
 		}
 	}
 </script>

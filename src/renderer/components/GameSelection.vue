@@ -52,61 +52,7 @@ export default {
 					if(!fileNames || fileNames.length < 1){
 						return false;
 					}
-
 					directory.directory = fileNames[0];
-
-					//
-					// let directory = fileNames[0];
-					//
-					// if(game==='tsl'){
-					// 	fs.readdir(directory, function (err, data) {
-					// 		if (err) return console.log(err)
-					//
-					// 		let key = data.find(function (row) {
-					// 			return row === 'chitin.key';
-					// 		})
-					//
-					// 		if (!key) {
-					// 			console.log('invalid directory');
-					// 			return false;
-					// 		}
-					//
-					// 		let game = data.find(function (row) {
-					// 			return row === 'swkotor2.ini';
-					// 		});
-					//
-					// 		if (game !== 'swkotor2.ini') {
-					// 			console.log('invalid directory: k1 as k2');
-					// 			return false;
-					// 		}
-					//
-					// 		me.tslPath = directory;
-					// 	});
-					// }
-					// else{
-					// 	fs.readdir(directory, function (err, data) {
-					// 		if (err) return console.log(err);
-					//
-					// 		let key = data.find(function (row) {
-					// 			return row === 'chitin.key';
-					// 		})
-					//
-					// 		if (!key) {
-					// 			console.log('invalid directory');
-					// 			return false;
-					// 		}
-					//
-					// 		let game = data.find(function (row) {
-					// 			return row === 'swkotor2.ini';
-					// 		});
-					//
-					// 		if (game === 'swkotor2.ini') {
-					// 			console.log('invalid directory: k2 as k1');
-					// 			return false;
-					// 		}
-					//
-					// 		me.kotorPath = directory;
-					// 	});
 				});
 		},
 		save: function(){
