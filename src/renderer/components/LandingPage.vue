@@ -1,18 +1,24 @@
 <template>
-	<el-container>
-		<el-header>
-			<el-button @click="goToPaths()" type="primary">Paths</el-button>
+	<div>
+		<header>
+			<button @click="goToPaths()" type="primary">Paths</button>
 			<h1>
 				Revan Editor
 			</h1>
-		</el-header>
+		</header>
 
-		<el-tree :data="bifFiles" ref="fileTree" expand-on-click-node lazy :load="loadNode1" :props="treeProps" :empty-text="emptyText"></el-tree>
+		<tree-view class="TreeViewDemo"
+			:model="bifFiles"
+            category="files"
+            :selection="selection"
+            :onSelect="onSelect"
+            :display="display" ref="fileTree"></tree-view>
 
-		<el-aside>
-			<el-button @click="extract()" type="primary">Export</el-button>
-		</el-aside>
-	</el-container>
+		<div>
+			<button @click="extract()" type="primary">Export</button>
+		</div>
+		<editor-tabs></editor-tabs>
+	</div>
 </template>
 
 <script>
@@ -25,8 +31,15 @@ const app = electron.remote.app;
 import path from 'path'
 const _ = require('lodash');
 
+import { TreeView } from "@bosket/vue"
+
+
 export default {
 	name: 'landing-page',
+	components: {
+        "tree-view": TreeView,
+		"editor-tabs": require('@/components/EditorTabs').default
+    },
 	created: function () {
 		var me = this;
 		me.filePath = path.join(app.getPath("userData"), '/RevanEditorPreferences.json');
@@ -64,6 +77,8 @@ export default {
 		bifFiles.push(tsl);
 
 		me.bifFiles = bifFiles;
+
+		console.log(bifFiles)
 	},
 
 	data:function(){
@@ -78,12 +93,8 @@ export default {
 				key: 24,
 				resource: 8,
 			},
-			treeProps: {
-				children: 'files',
-				label: 'fileName',
-				isLeaf: 'leaf'
-			},
-			bifFiles: [],
+			bifFiles:[],
+			selection:[],
 			fileExtensionLookup: {
 				'1':    {fileExtension: 'bmp', editors:[]},
 				'3':    {fileExtension: 'tga', editors:[]},
@@ -180,6 +191,12 @@ export default {
 		goToPaths(){
 			this.$router.push('GameSelection');
 		},
+		onSelect(newSelection) {
+		            this.selection = newSelection
+		        },
+		        display(item) {
+		            return item.fileName
+		        },
 
 		extract(){
 			var me = this;
@@ -557,4 +574,166 @@ h1{
 	right: 0;
 	position: fixed;
 }
+
+/* Search bar */
+
+.TreeViewDemo>input[type="search"] {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.05);
+    height: 3em;
+    border-width: 2px;
+    transition: border 0.5s;
+}
+
+/* Elements */
+
+.TreeViewDemo {
+    box-shadow: 0px 0px 10px #DADADA;
+    white-space: nowrap;
+}
+
+.TreeViewDemo ul {
+    list-style: none;
+}
+
+.TreeViewDemo li {
+    min-width: 100px;
+    transition: all 0.25s ease-in-out;
+}
+
+.TreeViewDemo ul li a {
+    color: #222;
+}
+
+.TreeViewDemo ul li>.item>a {
+    display: inline-block;
+    vertical-align: middle;
+    width: calc(100% - 55px);
+    margin-right: 30px;
+    padding: 10px 5px;
+    text-decoration: none;
+    transition: all 0.25s;
+}
+
+.TreeViewDemo ul li:not(.disabled) {
+    cursor: pointer;
+}
+
+.TreeViewDemo ul li.selected>.item>a {
+    color: crimson;
+}
+
+.TreeViewDemo ul li.selected>.item>a:hover {
+    color: #aaa;
+}
+
+.TreeViewDemo ul li:not(.disabled)>.item>a:hover {
+    color: #e26f6f;
+}
+
+
+/* Root elements */
+
+.TreeViewDemo ul.depth-0 {
+    padding: 20px;
+    margin: 0;
+    background-color: rgba(255, 255, 255, 0.4);
+    user-select: none;
+    transition: all 0.25s;
+}
+
+
+/* Categories : Nodes with children */
+
+.TreeViewDemo li.category>.item {
+    display: block;
+    margin-bottom: 5px;
+    transition: all 0.25s ease-in-out;
+}
+
+.TreeViewDemo li.category:not(.folded)>.item {
+    border-bottom: 1px solid crimson;
+}
+
+
+/* Category opener */
+
+.TreeViewDemo .opener {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.TreeViewDemo .opener::after {
+    /* content: '+'; */
+    display: block;
+    transition: all 0.25s;
+    font-family: monospace;
+}
+
+/* .TreeViewDemo li.category.async>.item>.opener::after {
+    content: '!';
+} */
+
+.TreeViewDemo .opener:hover {
+    color: #e26f6f;
+}
+
+.TreeViewDemo li.category:not(.folded)>.item>.opener::after {
+    color: crimson;
+    transform: rotate(45deg);
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg)
+    }
+    to {
+        transform: rotate(360deg)
+    }
+}
+
+.TreeViewDemo li.category.loading>.item>.opener::after {
+    animation: spin 1s infinite;
+}
+
+
+/* Animations on fold / unfold */
+
+.TreeViewDemoTransition-enter, .TreeViewDemoTransition-leave-to {
+    opacity: 0;
+    transform: translateX(-50px);
+}
+
+.TreeViewDemoTransition-enter-active, .TreeViewDemoTransition-leave-active {
+    transition: all .3s ease-in-out;
+}
+
+
+/* Drag'n'drop */
+
+.TreeViewDemo li.dragover, .TreeViewDemo ul.dragover {
+    box-shadow: 0px 0px 5px #CCC
+}
+
+.TreeViewDemo ul.dragover {
+    background-color: rgba(200, 200, 200, 0.3);
+}
+
+.TreeViewDemo li.dragover {
+    background-color: rgba(100, 100, 100, 0.05);
+    padding: 0px 5px;
+}
+
+.TreeViewDemo li.dragover>span.item {
+    border-color: transparent;
+}
+
+.TreeViewDemo li.nodrop {
+    box-shadow: 0px 0px 5px crimson;
+    background-color: rgba(255, 20, 60, 0.1);
+    padding: 0px 5px;
+}
+
 </style>
