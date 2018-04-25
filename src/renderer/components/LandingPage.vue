@@ -1,15 +1,17 @@
 <template>
 	<div class="main">
 		<header class="head">
-			<div>
+			<div class="setting-toolbar">
+				<button @click="goToPaths()" type="primary">Settings</button>
 			</div>
 			<h1>
 				Revan Editor
 			</h1>
 		</header>
+		<span class="pad"></span>
 		<nav class="tool">
-			<button @click="goToPaths()" type="primary">Paths</button>
 			<button @click="extract()" type="primary">Export</button>
+			<button>Edit</button>
 		</nav>
 		<tree-view class="TreeViewDemo left"
 			:model="bifFiles"
@@ -250,17 +252,28 @@
 
 <style>
 
+
 .main{
 	height: 100%;
 	display: grid;
-	grid-template-rows: 50px 50px 1fr 12px;
-	grid-template-columns: 1fr 2fr;
+	grid-template-rows: 50px 10px 50px 1fr;
+	grid-template-columns: 300px 2fr;
 	grid-column-gap: 30px;
 	grid-template-areas:
 		"head head"
-		"tool tool"
+		"tool pad"
+		"tool right"
 		"left right"
 		"foot foot";
+}
+
+.setting-toolbar{
+	display: grid;
+	grid-template-columns: repeat(auto-fill, 80px);
+	padding: 10px;
+}
+.setting-toolbar{
+
 }
 
 .head{
@@ -275,32 +288,23 @@
 }
 .tool{
 	grid-area: tool;
-
-display: grid;
-grid-template-rows: 1fr;
-grid-template-columns: repeat(auto-fill, 60px);
-grid-column-gap: 10px;
-margin: 10px;
-
+	display: grid;
+	grid-template-rows: 1fr;
+	grid-template-columns: repeat(auto-fill, 65px);
+	grid-column-gap: 10px;
+	padding: 12px 0px 12px 10px;
 }
 
 .right{
 	grid-area: right;
 }
 
-body{
-	margin: 0;
-}
 h1{
-	top: 15px;
-	position: absolute;
-	margin: 0;
-	right: 20px;
 	text-align: center;
 	font-weight: 100;
 	font-size: 20px;
 	color:white;
-	height: 100%;
+	padding-right: 10px;
 }
 
 .el-tree{
