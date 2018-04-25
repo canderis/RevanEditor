@@ -33,6 +33,8 @@
 
 	import { TreeView } from "@bosket/vue"
 
+	const lotor = require('lotor');
+	console.log(lotor)
 
 	export default {
 		name: 'landing-page',
@@ -61,17 +63,19 @@
 			var tsl = {fileName:'TSL', files:[]};
 
 			if(me.kotorPath){
-				me.currentGame = "k1";
-				kotor.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.kotorPath) });
-				kotor.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.kotorPath) });
-			}
-			if(me.tslPath){
-				me.currentGame = "tsl";
-				tsl.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.tslPath) });
-				tsl.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.tslPath) });
+				console.log(new lotor.lotor(me.kotorPath, fs));
+				// console.log(new lotor.erf(me.kotorPath, fs));
+
+				//kotor.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.kotorPath) });
+				//kotor.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.kotorPath) });
 			}
 
-			me.currentGame = "";
+			if(me.tslPath){
+				//tsl.files.push( {fileName:'BIFs', leaf: false, files: me.parseChitinKey(me.tslPath) });
+				//tsl.files.push( {fileName:'ERFs', leaf: false, files: me.readErfs(me.tslPath) });
+			}
+
+
 
 			bifFiles.push(kotor);
 			bifFiles.push(tsl);
@@ -87,12 +91,6 @@
 				filePath: "",
 				kotorPath: "",
 				tslPath: "",
-				currentGame: "",
-				erf_sizes: {
-					header: 44,
-					key: 24,
-					resource: 8,
-				},
 				bifFiles:[],
 				selection:[],
 				transition: {
@@ -238,51 +236,6 @@
 
 			},
 
-			extractErf( file, path, gameIndex ) {
-				var me = this;
-
-				var resoucePath = me.bifFiles[gameIndex].files[1];
-
-				var index = _.findIndex(resoucePath, 'fileName', file.erfFileName);
-
-				var fd = fs.openSync(path + "/" + "TexturePacks/" + file.erfFileName, 'r');
-
-				let buf = new Buffer(file.size);
-				fs.readSync( fd, buf, 0, file.size, file.offset );
-				return buf;
-			},
-
-			extractBif( file, path, index ){
-				var me = this;
-
-				var fd = fs.openSync(path + "/" + me.bifFiles[index].files[0].files[file.bifIndex].bif_filename.trim().replace(/\\/g,"/").replace(/\0/g, ''), 'r');
-
-				var buffer = new Buffer(20);
-				fs.readSync(fd, buffer, 0, 20, 0 );
-
-				var bifHeader = {
-					number_of_variable_resources: buffer.readUInt32LE(8),
-					number_of_fixed_resouces: buffer.readUInt32LE(12),
-					offset_to_variable_resouces: buffer.readUInt32LE(16)
-				};
-
-
-				buffer = new Buffer(16);
-				fs.readSync(fd, buffer, 0, 16, bifHeader.offset_to_variable_resouces + 16*file.indexOfFileInBif );
-				var variableTable = {
-					id: buffer.readUInt32LE(0),
-					offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
-					size_of_raw_data_chunk: buffer.readUInt32LE(8),
-					resource_type: buffer.readUInt32LE(12)
-				};
-
-				buffer = new Buffer(variableTable.size_of_raw_data_chunk);
-				fs.readSync(fd, buffer, 0, variableTable.size_of_raw_data_chunk, variableTable.offset_into_variable_resource_raw_data );
-
-				return buffer;
-
-			},
-
 			loadNode1(node, resolve) {
 				if (node.level === 0) {
 				  return resolve(node.data);
@@ -290,256 +243,7 @@
 				resolve(node.data.files);
 			},
 
-			parseChitinKey (directory) {
-				var me = this;
 
-				var fd = fs.openSync(directory + '/chitin.key', 'r');
-
-				me.chitinHeader = me.readChitinHeader(fd);
-				var bifFiles = me.parseBifFileDataInChitin(fd, me.chitinHeader);
-				bifFiles = me.parseTableOfKeys(fd, me.chitinHeader, bifFiles, me.fileExtensionLookup);
-
-				fs.closeSync(fd);
-				return bifFiles;
-			},
-
-			readChitinHeader (fd) {
-				var me = this;
-				let buffer = new Buffer(60);
-				fs.readSync(fd, buffer, 0, 60, 0 );
-
-				return {
-					number_of_bif_files: buffer.readUInt32LE(8),
-					number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
-					offset_to_table_of_files: buffer.readUInt32LE(16),
-					offset_to_table_of_keys: buffer.readUInt32LE(20),
-					build_year: buffer.readUInt32LE(24),
-					build_day: buffer.readUInt32LE(28),
-					header_length: 60
-				};
-			},
-
-			parseBifFileDataInChitin (fd, chitinHeader) {
-				var me = this;
-				var bifFiles = [];
-				for (let i = 0; i < chitinHeader.number_of_bif_files; i++) {
-					var bif = {};
-					let buffer = new Buffer(12);
-					fs.readSync(fd, buffer, 0, 12, chitinHeader.offset_to_table_of_files + (i * 12));
-
-					var bif = {
-						size_of_file: buffer.readUInt32LE(0),
-						offset_into_filename_table_for_filename: buffer.readUInt32LE(4),
-						length_of_filename: buffer.readUInt16LE(8),
-						bif_drive: buffer.readUInt16LE(10),
-					};
-
-					let filenameBuffer = new Buffer(bif.length_of_filename);
-					fs.readSync(fd, filenameBuffer, 0, bif.length_of_filename, bif.offset_into_filename_table_for_filename);
-
-					var fileName = filenameBuffer.toString();
-					bif.bif_filename = fileName;
-					bif.fileName = fileName.replace("data\\", '').trim().replace(/\0/g, '');
-
-					bifFiles.push(bif);
-
-				}
-
-				return bifFiles;
-			},
-
-			parseTableOfKeys(fd, chitinHeader, bifFiles, fileExtensionLookup){
-				var me = this;
-				for (let i = 0; i < chitinHeader.number_of_entries_in_chitin_key; i++) {
-					let buffer = new Buffer(22);
-					fs.readSync(fd, buffer, 0, 22, chitinHeader.offset_to_table_of_keys + (i * 22));
-
-					let file = {
-						resref: buffer.toString('utf8', 0, 16),
-						file_extension_code: buffer.readUInt16LE(16),
-						uniqueId: buffer.readUInt32LE(18),
-						leaf: true,
-						game: me.currentGame
-					};
-
-					file.bifIndex = file.uniqueId >> 20
-					file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20)
-
-					file.fileExtension = fileExtensionLookup[file.file_extension_code].fileExtension;
-					file.fileName = file.resref + "." + file.fileExtension;
-					file.fileName = file.fileName.trim().replace(/\0/g, '')
-
-
-					if(!bifFiles[file.bifIndex]) console.log('Error File!!!', file);
-
-					if(!bifFiles[file.bifIndex].files) bifFiles[file.bifIndex].files = [];
-
-					bifFiles[file.bifIndex].files.push(file);
-				}
-
-				bifFiles.forEach(function(ele){
-					if(ele.files.length >= 100){
-						var sorted = {};
-						ele.files.forEach(function(file){
-							if(!sorted[file.fileExtension]){
-								sorted[file.fileExtension] = [];
-							}
-							sorted[file.fileExtension].push(file);
-						})
-
-
-						//_.forEach(sorted, function(resourceType){
-						for(var resourceTypeKey in sorted){
-							if(sorted[resourceTypeKey].length >= 100){
-								//alphabetize
-								var alphabetized = {};
-								sorted[resourceTypeKey].forEach( function(file){
-									var letterKey = file.fileName.charAt(0);
-									if(!alphabetized[letterKey]){
-										alphabetized[letterKey] = [];
-									}
-									alphabetized[letterKey].push(file);
-								});
-
-								var alphabetizedFiles = [];
-								for(var key in alphabetized ){
-									alphabetizedFiles.push({files: alphabetized[key], fileName: key + ' (' + alphabetized[key].length + ')'});
-								}
-
-								sorted[resourceTypeKey] = alphabetizedFiles;
-							}
-						}
-
-						var files = [];
-						for(var key in sorted ){
-							files.push({files: sorted[key], fileName: key});
-						}
-
-
-
-						ele.files = files;
-					}
-
-				})
-
-				return bifFiles;
-			},
-
-			readErfs(directory){
-				var me = this;
-				var data = fs.readdirSync(directory + '/TexturePacks');
-				var erfs = [];
-				data.forEach(function(fileName){
-					erfs.push(me.read_erf_file(directory + '/TexturePacks/', fileName));
-				});
-
-
-
-				return erfs;
-			},
-
-			read_erf_file(directory, fileName) {
-				let me = this;
-				let erf = {};
-				let fd = fs.openSync(directory + fileName, 'r');
-				let buf = new Buffer(me.erf_sizes.header);
-				fs.readSync(fd, buf, 0, me.erf_sizes.header);
-				erf.fileName = fileName;
-				erf.header = me.read_erf_header(buf);
-				if (erf.header.language_count) {
-					//buf = new Buffer(erf.header.offset_to_key_list - erf.header.offset_to_localized_string);
-					console.log('localized string size: ' + erf.header.localized_string_size);
-					buf = new Buffer(erf.header.localized_string_size);
-					fs.readSync(fd, buf, 0, erf.header.localized_string_size, erf.header.offset_to_localized_string);
-					erf.strings = me.erf_read_localized_strings(buf, erf);
-				}
-				if (!erf.header.entry_count) {
-					return erf;
-				}
-				buf = new Buffer(erf.header.entry_count * (me.erf_sizes.key + me.erf_sizes.resource));
-				fs.readSync(fd, buf, 0, erf.header.entry_count * (me.erf_sizes.key + me.erf_sizes.resource), erf.header.offset_to_key_list);
-				erf.files = me.read_erf_resources(buf, erf, fileName);
-				erf.leaf = false;
-
-				fs.closeSync(fd);
-
-				if(erf.files.length >= 100 ){
-					//alphabetize
-					var alphabetized = {};
-					erf.files.forEach( function(file){
-						var letterKey = file.fileName.charAt(0).toUpperCase();
-						if(!alphabetized[letterKey]){
-							alphabetized[letterKey] = [];
-						}
-						alphabetized[letterKey].push(file);
-					});
-
-					var alphabetizedFiles = [];
-					for(var key in alphabetized ){
-						alphabetizedFiles.push({files: alphabetized[key], fileName: key + ' (' + alphabetized[key].length + ')'});
-					}
-
-					erf.files = alphabetizedFiles;
-				}
-				return erf;
-			},
-
-			read_erf_header(buf) {
-				let erf = {};
-				erf.type = buf.slice(0, 4).toString().trim().toLowerCase();
-				erf.version_string = buf.slice(4, 8).toString().trim().toLowerCase();
-				erf.language_count = buf.readUInt32LE(8, 12);
-				erf.localized_string_size = buf.readUInt32LE(12, 16);
-				erf.entry_count = buf.readUInt32LE(16, 20);
-				erf.offset_to_localized_string = buf.readUInt32LE(20, 24);
-				erf.offset_to_key_list = buf.readUInt32LE(24, 28);
-				erf.offset_to_resource_list = buf.readUInt32LE(28, 32);
-				erf.build_year = buf.readUInt32LE(32, 36);
-				erf.build_day = buf.readUInt32LE(36, 40);
-				erf.description_str_ref = buf.readUInt32LE(40, 44);
-				return erf;
-			},
-
-			erf_read_localized_strings(buf, erf) {
-				let str = {};
-				// read a string
-				let lang_id = buf.readUInt32LE(0, 4);
-				let feminine = false;
-				if (lang_id % 2) {
-				feminine = true;
-				lang_id -= 1;
-				}
-				lang_id /= 2;
-				//TODO select an encoding based on language ID
-				// let str_size = buf.readUInt32LE(4, 8);
-				// // let s = buf.slice(8, 8 + str_size);
-				// // if (s.charCodeAt(s.length - 1) === 0) {
-				// // 	s = s.slice(0, -1);
-				// // }
-				return str;
-			},
-
-			read_erf_resources(buf, erf, fileName) {
-				let keys = [];
-				for (let i = 0; i < erf.header.entry_count; i++) {
-					let key = {};
-					let keypos = i * this.erf_sizes.key;
-					key.fileName = buf.slice(keypos, keypos + 16).toString().replace(/\0+$/, '');
-					key.res_id = buf.readUInt32LE(keypos + 16, keypos + 20);
-					key.res_type = this.fileExtensionLookup[buf.readUInt16LE(keypos + 20, keypos + 22)].fileExtension;
-					let res = {};
-					let respos = erf.header.entry_count * this.erf_sizes.key + (i * this.erf_sizes.resource);
-					res.offset = buf.readUInt32LE(respos, respos + 4);
-					res.size = buf.readUInt32LE(respos + 4, respos + 8);
-					res.fileName = key.fileName + '.' + key.res_type;
-					res.leaf = true;
-					res.extractionType = 'erf';
-					res.erfFileName = fileName;
-					//keys[key.filename + '.' + key.res_type] = res;
-					keys.push(res);
-				}
-				return keys;
-			}
 		}
 	}
 </script>
