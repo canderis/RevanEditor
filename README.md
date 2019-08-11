@@ -1,9 +1,29 @@
-# RevanEditor
-A new WIP, open source Modding Tool for Star Wars Knights of the Old Republic
+# revan-editor
 
+## Project setup
+```
+npm install
+```
 
-Credits:
-FairStrides for a ton of help decoding the files
-TK102 for providing info to FairStrides on the file formats
-ndix UR for advice and lots of code snippets
-Jtm at Thingiverse for the icon
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
+
+### Compiles and minifies for production
+```
+npm run build
+```
+
+### Run your tests
+```
+npm run test
+```
+
+### Lints and fixes files
+```
+npm run lint
+```
+
+### Customize configuration
+See [Configuration Reference](https://cli.vuejs.org/config/).
