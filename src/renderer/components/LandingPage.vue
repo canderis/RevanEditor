@@ -14,11 +14,13 @@
 			<button>Edit</button>
 		</nav>
 		<tree-view class="TreeViewDemo left"
-			:model="bifFiles"
-            category="files"
-            :selection="selection"
-            :onSelect="onSelect"
-            :display="display" ref="fileTree"></tree-view>
+			:model="games"
+			:selection="selection"
+			:onSelect="onSelect"
+			:display="display"
+			category="children"
+			ref="fileTree">
+		</tree-view>
 		<editor-tabs class="right"></editor-tabs>
 	</div>
 </template>
@@ -34,15 +36,16 @@
 	const _ = require('lodash');
 
 	import { TreeView } from "@bosket/vue"
+	import { string } from "@bosket/tools"
 
-	require('lotor');
+	const lotor = require('lotor').default;
 
 	export default {
 		name: 'landing-page',
 		components: {
-	        "tree-view": TreeView,
+			"tree-view": TreeView,
 			"editor-tabs": require('@/components/EditorTabs').default
-	    },
+		},
 		created: function () {
 			var me = this;
 			me.filePath = path.join(app.getPath("userData"), '/RevanEditorPreferences.json');
@@ -61,105 +64,14 @@
 
 		data:function(){
 			return {
-				emptyText: "Please open a key",
 				filePath: "",
 				directories: [],
 				games:[],
-				bifFiles:[],
+				// display: item => <a>{ item.label }</a>,
 				selection:[],
 				transition: {
-	                attrs: { appear: true },
-	                props: { name: "TreeViewDemoTransition" }
-				},
-				fileExtensionLookup: {
-					'1':    {fileExtension: 'bmp', editors:[]},
-					'3':    {fileExtension: 'tga', editors:[]},
-					'0':    {fileExtension: 'res', editors:[]},
-					'4':    {fileExtension: 'wav', editors:[]},
-					'6':    {fileExtension: 'plt', editors:[]},
-					'7':    {fileExtension: 'ini', editors:[]},
-					'8':    {fileExtension: 'mp3', editors:[]},
-					'9':    {fileExtension: 'mpg', editors:[]},
-					'10':   {fileExtension: 'txt', editors:[]},
-					'11':   {fileExtension: 'wma', editors:[]},
-					'12':   {fileExtension: 'wmv', editors:[]},
-					'13':   {fileExtension: 'xmv', editors:[]},
-					'2000': {fileExtension: 'plh', editors:[]},
-					'2001': {fileExtension: 'tex', editors:[]},
-					'2002': {fileExtension: 'mdl', editors:[]},
-					'2003': {fileExtension: 'thg', editors:[]},
-					'2005': {fileExtension: 'fnt', editors:[]},
-					'2007': {fileExtension: 'lua', editors:[]},
-					'2008': {fileExtension: 'slt', editors:[]},
-					'2009': {fileExtension: 'nss', editors:[]},
-					'2010': {fileExtension: 'ncs', editors:[]},
-					'2011': {fileExtension: 'mod', editors:[]},
-					'2012': {fileExtension: 'are', editors:[]},
-					'2013': {fileExtension: 'set', editors:[]},
-					'2014': {fileExtension: 'ifo', editors:[]},
-					'2015': {fileExtension: 'bic', editors:[]},
-					'2016': {fileExtension: 'wok', editors:[]},
-					'2017': {fileExtension: '2da', editors:[]},
-					'2018': {fileExtension: 'tlk', editors:[]},
-					'2022': {fileExtension: 'txi', editors:[]},
-					'2023': {fileExtension: 'git', editors:[]},
-					'2024': {fileExtension: 'bti', editors:[]},
-					'2025': {fileExtension: 'uti', editors:[]},
-					'2026': {fileExtension: 'btc', editors:[]},
-					'2027': {fileExtension: 'utc', editors:[]},
-					'2029': {fileExtension: 'dlg', editors:[]},
-					'2030': {fileExtension: 'itp', editors:[]},
-					'2031': {fileExtension: 'btt', editors:[]},
-					'2032': {fileExtension: 'utt', editors:[]},
-					'2033': {fileExtension: 'dds', editors:[]},
-					'2034': {fileExtension: 'bts', editors:[]},
-					'2035': {fileExtension: 'uts', editors:[]},
-					'2036': {fileExtension: 'ltr', editors:[]},
-					'2037': {fileExtension: 'gff', editors:[]},
-					'2038': {fileExtension: 'fac', editors:[]},
-					'2039': {fileExtension: 'bte', editors:[]},
-					'2040': {fileExtension: 'ute', editors:[]},
-					'2041': {fileExtension: 'btd', editors:[]},
-					'2042': {fileExtension: 'utd', editors:[]},
-					'2043': {fileExtension: 'btp', editors:[]},
-					'2044': {fileExtension: 'utp', editors:[]},
-					'2045': {fileExtension: 'dft', editors:[]},
-					'2046': {fileExtension: 'gic', editors:[]},
-					'2047': {fileExtension: 'gui', editors:[]},
-					'2048': {fileExtension: 'css', editors:[]},
-					'2049': {fileExtension: 'ccs', editors:[]},
-					'2050': {fileExtension: 'btm', editors:[]},
-					'2051': {fileExtension: 'utm', editors:[]},
-					'2052': {fileExtension: 'dwk', editors:[]},
-					'2053': {fileExtension: 'pwk', editors:[]},
-					'2054': {fileExtension: 'btg', editors:[]},
-					'2055': {fileExtension: 'utg', editors:[]},
-					'2056': {fileExtension: 'jrl', editors:[]},
-					'2057': {fileExtension: 'sav', editors:[]},
-					'2058': {fileExtension: 'utw', editors:[]},
-					'2059': {fileExtension: '4pc', editors:[]},
-					'2060': {fileExtension: 'ssf', editors:[]},
-					'2061': {fileExtension: 'hak', editors:[]},
-					'2062': {fileExtension: 'nwm', editors:[]},
-					'2063': {fileExtension: 'bik', editors:[]},
-					'2064': {fileExtension: 'ndb', editors:[]},
-					'2065': {fileExtension: 'ptm', editors:[]},
-					'2066': {fileExtension: 'ptt', editors:[]},
-					'3000': {fileExtension: 'lyt', editors:[]},
-					'3001': {fileExtension: 'vis', editors:[]},
-					'3002': {fileExtension: 'rim', editors:[]},
-					'3003': {fileExtension: 'pth', editors:[]},
-					'3004': {fileExtension: 'lip', editors:[]},
-					'3005': {fileExtension: 'bwm', editors:[]},
-					'3006': {fileExtension: 'txb', editors:[]},
-					'3007': {fileExtension: 'tpc', editors:[]},
-					'3008': {fileExtension: 'mdx', editors:[]},
-					'3009': {fileExtension: 'rsv', editors:[]},
-					'3010': {fileExtension: 'sig', editors:[]},
-					'3011': {fileExtension: 'xbx', editors:[]},
-					'9997': {fileExtension: 'erf', editors:[]},
-					'9998': {fileExtension: 'bif', editors:[]},
-					'9999': {fileExtension: 'key', editors:[]}
+					attrs: { appear: true },
+					props: { name: "TreeViewDemoTransition" }
 				}
 			};
 		},
@@ -168,7 +80,7 @@
 				var me = this;
 				var games = [];
 				me.directories.forEach(function(directory){
-					let game = lotor(directory.directory, fs);
+					let game = lotor(directory.directory, fs, directory.title);
 					if(game)
 						games.push(game)
 				})
@@ -179,11 +91,13 @@
 				this.$router.push('GameSelection');
 			},
 			onSelect(newSelection) {
-	            this.selection = newSelection
-	        },
-	        display(item) {
-	            return item.fileName
-	        },
+				console.log('selection', newSelection);
+				this.selection = newSelection
+			},
+			display(item) {
+				console.log(item);
+				return item.label;
+			},
 
 			extract(){
 				var me = this;
@@ -459,5 +373,6 @@ h1{
     background-color: rgba(255, 20, 60, 0.1);
     padding: 0px 5px;
 }
+
 
 </style>
