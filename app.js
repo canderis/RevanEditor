@@ -10,6 +10,6 @@ if (process.env.NODE_ENV === 'DEV') {
 }
 
 app.on('ready', () => {
-	const window = new BrowserWindow({ width: 800, height: 600 });
+	const window = new BrowserWindow({ width: 800, height: 600, webPreferences: { webSecurity: false, nodeIntegration: true } });
 	window.loadURL(url);
 });

@@ -18,6 +18,8 @@
     "vuex": "^3.0.1"
   },
   "devDependencies": {
+    "@electron/typescript-definitions": "^8.6.1",
+    "@types/electron": "^1.6.10",
     "@vue/cli-plugin-babel": "^3.10.0",
     "@vue/cli-plugin-typescript": "^3.10.0",
     "@vue/cli-service": "^3.10.0",
@@ -25,5 +27,8 @@
     "sass-loader": "^7.1.0",
     "typescript": "^3.4.3",
     "vue-template-compiler": "^2.6.10"
+  },
+  "browser": {
+    "fs": false
   }
 }
