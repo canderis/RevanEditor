@@ -1,53 +1,6 @@
-import { fileExtensionLookup } from './file-extensions';
+import { Chitin } from './file-types/chitin-key-file';
+import { BifArchive } from './file-types/bif-archive';
 
-/*
-	The chitin header gives information on how to parse the contents of the bif file.
-
-	When read from a buffer, this is how to parse the information:
-	number_of_bif_files: buffer.readUInt32LE(8),
-	number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
-	offset_to_table_of_files: buffer.readUInt32LE(16),
-	offset_to_table_of_keys: buffer.readUInt32LE(20),
-	build_year: buffer.readUInt32LE(24),
-	build_day: buffer.readUInt32LE(28),
-	header_length: 60
-*/
-interface ChitinHeader {
-	number_of_bif_files: number;
-	number_of_entries_in_chitin_key: number;
-	offset_to_table_of_files: number;
-	offset_to_table_of_keys: number;
-	build_year: number;
-	build_day: number;
-	header_length: 60;
-}
-
-export interface BifArchive {
-	fileName: string;
-	files: BifArchive[] | BifFile[];
-}
-
-export interface BifFile {
-	bifIndex: number;
-	fileExtension: string;
-	fileName: string;
-	file_extension_code: number;
-	game: 'KOTOR' | 'TSL';
-	indexOfFileInBif: number;
-	leaf: boolean;
-	resref: string;
-	uniqueId: number;
-}
-
-export interface BifDef {
-	bif_drive: number;
-	bif_filename: string;
-	fileName: string;
-	length_of_filename: number;
-	offset_into_filename_table_for_filename: number;
-	size_of_file: number;
-	files?: BifFile[];
-}
 
 const fs = require('fs');
 
@@ -55,9 +8,9 @@ export class Bif {
 	directory: string;
 	game: 'KOTOR' | 'TSL';
 
-	chitinHeader: ChitinHeader;
+	chitin: Chitin;
 
-	bifFiles: BifDef[];
+	bifFiles: BifArchive[];
 
 	constructor(directory, game: 'KOTOR' | 'TSL') {
 
@@ -66,180 +19,10 @@ export class Bif {
 
 		const fd = fs.openSync(directory + '/chitin.key', 'r');
 
-		this.chitinHeader = this.readChitinHeader(fd); // good
-		this.bifFiles = this.parseBifFileDataInChitin(fd);
+		this.chitin = new Chitin(this.directory, fd);
 
-		this.parseTableOfKeys(fd);
+		this.bifFiles = this.chitin.getBifArchives(fd);
 
 		fs.closeSync(fd);
 	}
-
-	parseTableOfKeys(fd) {
-		for (let i = 0; i < this.chitinHeader.number_of_entries_in_chitin_key; i++) {
-			const buffer = Buffer.alloc(22);
-			fs.readSync(
-				fd,
-				buffer,
-				0,
-				22,
-				this.chitinHeader.offset_to_table_of_keys + i * 22
-			);
-
-			const file = {
-				resref: buffer.toString('utf8', 0, 16),
-				file_extension_code: buffer.readUInt16LE(16),
-				uniqueId: buffer.readUInt32LE(18),
-				leaf: true,
-				game: this.game,
-				bifIndex: null,
-				indexOfFileInBif: null,
-				fileExtension: null,
-				fileName: null,
-			};
-
-			file.bifIndex = file.uniqueId >> 20;
-			file.indexOfFileInBif = file.uniqueId - (file.bifIndex << 20);
-
-			file.fileExtension = fileExtensionLookup[file.file_extension_code].fileExtension;
-			file.fileName = file.resref + '.' + file.fileExtension;
-			file.fileName = file.fileName.trim().replace(/\0/g, '');
-
-			if (!this.bifFiles[file.bifIndex]) {
-				console.log('Error File!!!', file);
-			}
-
-			if (!this.bifFiles[file.bifIndex].files) {
-				this.bifFiles[file.bifIndex].files = [];
-			}
-
-			this.bifFiles[file.bifIndex].files.push(file);
-		}
-	}
-
-	parseBifFileDataInChitin(fd): BifDef[] {
-		const bifDefs = [];
-
-		for (let i = 0; i < this.chitinHeader.number_of_bif_files; i++) {
-			const buffer = Buffer.alloc(12);
-			fs.readSync(
-				fd,
-				buffer,
-				0,
-				12,
-				this.chitinHeader.offset_to_table_of_files + i * 12
-			);
-
-			const bif = {
-				size_of_file: buffer.readUInt32LE(0),
-				offset_into_filename_table_for_filename: buffer.readUInt32LE(4),
-				length_of_filename: buffer.readUInt16LE(8),
-				bif_drive: buffer.readUInt16LE(10),
-				bif_filename: '',
-				fileName: ''
-			};
-
-			const filenameBuffer = Buffer.alloc(bif.length_of_filename);
-			fs.readSync(
-				fd,
-				filenameBuffer,
-				0,
-				bif.length_of_filename,
-				bif.offset_into_filename_table_for_filename
-			);
-
-			const fileName = filenameBuffer.toString();
-			bif.bif_filename = fileName;
-			bif.fileName = fileName
-				.replace('data\\', '')
-				.trim()
-				.replace(/\0/g, '');
-
-			bifDefs.push(bif);
-		}
-
-		return bifDefs;
-	}
-
-	readChitinHeader(fd): ChitinHeader {
-
-		const buffer = Buffer.alloc(60);
-		fs.readSync(fd, buffer, 0, 60, 0);
-
-		return {
-			number_of_bif_files: buffer.readUInt32LE(8),
-			number_of_entries_in_chitin_key: buffer.readUInt32LE(12),
-			offset_to_table_of_files: buffer.readUInt32LE(16),
-			offset_to_table_of_keys: buffer.readUInt32LE(20),
-			build_year: buffer.readUInt32LE(24),
-			build_day: buffer.readUInt32LE(28),
-			header_length: 60
-		};
-	}
-
-	extractBif(file) {
-		const fd = fs.openSync(
-			`${this.directory}/${this.bifFiles[file.bifIndex].bif_filename
-					.trim()
-					.replace(/\\/g, '/')
-					.replace(/\0/g, '')}`
-		);
-
-		let buffer = Buffer.alloc(20);
-		fs.readSync(fd, buffer, 0, 20, 0);
-
-		const bifHeader = {
-			number_of_variable_resources: buffer.readUInt32LE(8),
-			number_of_fixed_resouces: buffer.readUInt32LE(12),
-			offset_to_variable_resouces: buffer.readUInt32LE(16)
-		};
-
-		buffer = Buffer.alloc(16);
-		fs.readSync(
-			fd,
-			buffer,
-			0,
-			16,
-			bifHeader.offset_to_variable_resouces + 16 * file.indexOfFileInBif
-		);
-		const variableTable = {
-			id: buffer.readUInt32LE(0),
-			offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
-			size_of_raw_data_chunk: buffer.readUInt32LE(8),
-			resource_type: buffer.readUInt32LE(12)
-		};
-
-		buffer = Buffer.alloc(variableTable.size_of_raw_data_chunk);
-		fs.readSync(
-			fd,
-			buffer,
-			0,
-			variableTable.size_of_raw_data_chunk,
-			variableTable.offset_into_variable_resource_raw_data
-		);
-
-		return buffer;
-	}
-
-	// extractErf(file, path, gameIndex) {
-	// 	const resoucePath = this.bifFiles[gameIndex].files[1];
-
-	// 	// let index = _.findIndex(resoucePath, 'fileName', file.erfFileName);
-
-	// 	// let fd = this.fs.openSync(
-	// 	// 	path + '/' + 'TexturePacks/' + file.erfFileName,
-	// 	// 	'r'
-	// 	// );
-
-	// 	// const buf = new Buffer(file.size);
-	// 	// this.fs.readSync(fd, buf, 0, file.size, file.offset);
-	// 	// return buf;
-	// }
-
-	// getBifTree() {
-	// 	// if (!this.bifTree) {
-	// 	// 	this.buildBifTree();
-	// 	// }
-
-	// 	// return this.bifTree;
-	// }
 }

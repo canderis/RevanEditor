@@ -1,8 +1,4 @@
-import { Bif, BifDef, BifFile } from './bif';
-
-interface BifFileExt extends BifFile{
-	bif?: Bif;
-}
+import { Bif, } from './bif';
 
 export class Game {
 	bif: Bif;
@@ -41,75 +37,5 @@ export class Game {
 
 		this.bif = new Bif(directory, this.game);
 		// this.erf = new erf(directory, fs);
-	}
-
-	getTree() {
-		console.log(this);
-		return {
-			fileName: this.game,
-			files: [
-				{
-					fileName: 'Bifs',
-					files: this.format(this.bif.bifFiles)
-				}
-			]
-		};
-	}
-
-	format(files: BifDef[]) {
-		return files.map(file => {
-			if (file.files.length > 100) {
-				return { ...file, files: this.formatByExt(file.files as BifFileExt[]) };
-			} else {
-				return {...file, bif: this.bif};
-			}
-		});
-	}
-	formatByExt(files: BifFileExt[]) {
-		const sorted = new Map<string, BifFileExt[]>();
-		files.forEach(file => {
-			if ( !sorted.has(file.fileExtension) ) {
-				sorted.set(file.fileExtension, []);
-			}
-			sorted.get(file.fileExtension).push(file);
-		});
-
-		const out = [];
-		sorted.forEach((sortedFiles, key) => {
-			if (sortedFiles.length > 100) {
-				out.push({
-					fileName: key,
-					files: this.formatByAlphabet(sortedFiles)
-				});
-			} else {
-				out.push({
-					fileName: key,
-					files: sortedFiles,
-					bif: this.bif
-				});
-			}
-		});
-
-		return out;
-	}
-
-	formatByAlphabet(files: BifFileExt[]) {
-		const sorted = new Map<string, BifFileExt[]>();
-		files.forEach(file => {
-			if ( !sorted.has(file.fileName.charAt(0)) ) {
-				sorted.set(file.fileName.charAt(0), []);
-			}
-			sorted.get(file.fileName.charAt(0)).push({...file, bif: this.bif});
-		});
-
-		const out = [];
-		sorted.forEach((sortedFiles, key) => {
-			out.push({
-				fileName: key,
-				files: sortedFiles,
-			});
-		});
-
-		return out;
 	}
 }

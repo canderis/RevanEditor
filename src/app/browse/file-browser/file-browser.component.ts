@@ -67,10 +67,9 @@ export class FileBrowserComponent {
 			pref.directories.forEach(directory => {
 				const game = lotorService.openDir(directory);
 
-				games.push(game.getTree());
-
+				games.push(lotorService.getTree(game));
 			});
-			this.dataSource.data = games as FileNode[];
+			this.dataSource.data = games;
 		});
 
 
@@ -112,18 +111,19 @@ export class FileBrowserComponent {
 	}
 
 	async extract()  {
+		console.log(this.selectedFile);
+
 		const remote = require('electron').remote;
 		const dialog = remote.dialog;
 		const fs = require('fs');
 
 		const fileNames = await dialog.showSaveDialog({defaultPath: this.selectedFile.name});
-		console.log(fileNames);
 
 		if (!fileNames) {
 			return false;
 		}
 
-		const buffer = this.selectedFile.file.bif.extractBif(this.selectedFile.file);
+		const buffer = this.selectedFile.file.extract(this.selectedFile.file);
 
 
 		fs.writeFileSync(fileNames.filePath, buffer);
