@@ -1,0 +1,18 @@
+<mat-card>
+	<mat-card-title>Game Directories</mat-card-title>
+	<mat-card-content>
+		<ul class="directory-list">
+			<li *ngFor="let path of directories; let i = index;">
+				<mat-form-field>
+					<input matInput [value]="path">
+				</mat-form-field>
+				<button mat-button (click)="browse(i)">...</button>
+			</li>
+		</ul>
+		<button mat-button (click)="directories.push('')" >Add Directory</button>
+	</mat-card-content>
+	<mat-card-actions>
+		<button mat-button>Cancel</button>
+		<button mat-button color='primary' (click)="save()" >Save</button>
+	</mat-card-actions>
+</mat-card>

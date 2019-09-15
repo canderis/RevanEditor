@@ -1,18 +1,13 @@
 {
-  "name": "angular-electron",
-  "version": "6.1.0",
-  "description": "Angular 8 with Electron (Typescript + SASS + Hot Reload)",
-  "homepage": "https://github.com/maximegris/angular-electron",
+  "name": "revan-editor",
+  "version": "0.0.0",
+  "description": "Modding tool for KOTOR & TSL",
+  "homepage": "https://github.com/canderis/RevanEditor",
   "author": {
-    "name": "Maxime GRIS",
-    "email": "maxime.gris@gmail.com"
+    "name": "Scott Huffman"
   },
   "keywords": [
-    "angular",
-    "angular 8",
-    "electron",
-    "typescript",
-    "sass"
+    "revan"
   ],
   "main": "main.js",
   "private": true,
