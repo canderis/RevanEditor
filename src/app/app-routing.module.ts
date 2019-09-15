@@ -13,6 +13,10 @@ const routes: Routes = [
 		loadChildren: () => import('./settings/settings.module').then(m => m.SettingsModule),
 	},
 	{
+		path: 'browse',
+		loadChildren: () => import('./browse/browse.module').then(m => m.BrowseModule),
+	},
+	{
 		path: '**',
 		component: PageNotFoundComponent
 	},

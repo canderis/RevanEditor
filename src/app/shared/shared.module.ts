@@ -11,6 +11,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {MatButtonModule} from '@angular/material/button';
 import {MatCardModule} from '@angular/material/card';
+import { MatTreeModule } from '@angular/material/tree';
+import { MatIconModule } from '@angular/material/icon';
 
 
 
@@ -23,7 +25,9 @@ import {MatCardModule} from '@angular/material/card';
 		MatFormFieldModule,
 		MatInputModule,
 		MatButtonModule,
-		MatCardModule
+		MatCardModule,
+		MatTreeModule,
+		MatIconModule,
 	],
 	exports: [
 		TranslateModule,
@@ -32,7 +36,9 @@ import {MatCardModule} from '@angular/material/card';
 		MatFormFieldModule,
 		MatInputModule,
 		MatButtonModule,
-		MatCardModule
+		MatCardModule,
+		MatTreeModule,
+		MatIconModule,
 	]
 })
 export class SharedModule {}
