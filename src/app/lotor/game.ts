@@ -1,5 +1,9 @@
 import { Bif, BifDef, BifFile } from './bif';
 
+interface BifFileExt extends BifFile{
+	bif?: Bif;
+}
+
 export class Game {
 	bif: Bif;
 	game: 'KOTOR' | 'TSL';
@@ -55,14 +59,14 @@ export class Game {
 	format(files: BifDef[]) {
 		return files.map(file => {
 			if (file.files.length > 100) {
-				return { ...file, files: this.formatByExt(file.files) };
+				return { ...file, files: this.formatByExt(file.files as BifFileExt[]) };
 			} else {
-				return file;
+				return {...file, bif: this.bif};
 			}
 		});
 	}
-	formatByExt(files: BifFile[]) {
-		const sorted = new Map<string, BifFile[]>();
+	formatByExt(files: BifFileExt[]) {
+		const sorted = new Map<string, BifFileExt[]>();
 		files.forEach(file => {
 			if ( !sorted.has(file.fileExtension) ) {
 				sorted.set(file.fileExtension, []);
@@ -80,7 +84,8 @@ export class Game {
 			} else {
 				out.push({
 					fileName: key,
-					files: sortedFiles
+					files: sortedFiles,
+					bif: this.bif
 				});
 			}
 		});
@@ -88,20 +93,20 @@ export class Game {
 		return out;
 	}
 
-	formatByAlphabet(files: BifFile[]) {
-		const sorted = new Map<string, BifFile[]>();
+	formatByAlphabet(files: BifFileExt[]) {
+		const sorted = new Map<string, BifFileExt[]>();
 		files.forEach(file => {
 			if ( !sorted.has(file.fileName.charAt(0)) ) {
 				sorted.set(file.fileName.charAt(0), []);
 			}
-			sorted.get(file.fileName.charAt(0)).push(file);
+			sorted.get(file.fileName.charAt(0)).push({...file, bif: this.bif});
 		});
 
 		const out = [];
 		sorted.forEach((sortedFiles, key) => {
 			out.push({
 				fileName: key,
-				files: sortedFiles
+				files: sortedFiles,
 			});
 		});
 

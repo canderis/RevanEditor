@@ -16,4 +16,5 @@ export class LotorService {
 		return this.games.get(dir);
 
 	}
+
 }

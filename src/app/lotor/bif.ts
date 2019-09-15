@@ -114,55 +114,6 @@ export class Bif {
 
 			this.bifFiles[file.bifIndex].files.push(file);
 		}
-
-		// this.bifFiles.forEach(function(ele) {
-		// 	if (ele.files.length >= 100) {
-		// 		const sorted = {};
-		// 		ele.files.forEach((file as BifFile) => {
-		// 			if (!sorted[file.fileExtension]) {
-		// 				sorted[file.fileExtension] = [];
-		// 			}
-		// 			sorted[file.fileExtension].push(file);
-		// 		});
-
-		// 		// _.forEach(sorted, function(resourceType){
-		// 		for (const resourceTypeKey in sorted) {
-		// 			if (sorted[resourceTypeKey].length >= 100) {
-		// 				// alphabetize
-		// 				const alphabetized = {};
-		// 				sorted[resourceTypeKey].forEach(function(file) {
-		// 					const letterKey = file.fileName.charAt(0);
-		// 					if (!alphabetized[letterKey]) {
-		// 						alphabetized[letterKey] = [];
-		// 					}
-		// 					alphabetized[letterKey].push(file);
-		// 				});
-
-		// 				const alphabetizedFiles = [];
-		// 				for (const key in alphabetized) {
-		// 					if (alphabetized[key]) {
-		// 						alphabetizedFiles.push({
-		// 							files: alphabetized[key],
-		// 							fileName:
-		// 								key + ' (' + alphabetized[key].length + ')'
-		// 						});
-		// 					}
-		// 				}
-
-		// 				sorted[resourceTypeKey] = alphabetizedFiles;
-		// 			}
-		// 		}
-
-		// 		const files = [];
-		// 		for (const key in sorted) {
-		// 			if (sorted[key]) {
-		// 				files.push({ files: sorted[key], fileName: key });
-		// 			}
-		// 		}
-
-		// 		ele.files = files;
-		// 	}
-		// });
 	}
 
 	parseBifFileDataInChitin(fd): BifDef[] {
@@ -225,73 +176,70 @@ export class Bif {
 		};
 	}
 
-	// extractBif(file, path, index) {
-	// 	const fd = fs.openSync(
-	// 		path +
-	// 			'/' +
-	// 			this.bifFiles[index].files[0].files[file.bifIndex].bif_filename
-	// 				.trim()
-	// 				.replace(/\\/g, '/')
-	// 				.replace(/\0/g, ''),
-	// 		'r'
-	// 	);
+	extractBif(file) {
+		const fd = fs.openSync(
+			`${this.directory}/${this.bifFiles[file.bifIndex].bif_filename
+					.trim()
+					.replace(/\\/g, '/')
+					.replace(/\0/g, '')}`
+		);
 
-	// 	let buffer = Buffer.alloc(20);
-	// 	fs.readSync(fd, buffer, 0, 20, 0);
+		let buffer = Buffer.alloc(20);
+		fs.readSync(fd, buffer, 0, 20, 0);
 
-	// 	const bifHeader = {
-	// 		number_of_variable_resources: buffer.readUInt32LE(8),
-	// 		number_of_fixed_resouces: buffer.readUInt32LE(12),
-	// 		offset_to_variable_resouces: buffer.readUInt32LE(16)
-	// 	};
+		const bifHeader = {
+			number_of_variable_resources: buffer.readUInt32LE(8),
+			number_of_fixed_resouces: buffer.readUInt32LE(12),
+			offset_to_variable_resouces: buffer.readUInt32LE(16)
+		};
 
-	// 	buffer = Buffer.alloc(16);
-	// 	fs.readSync(
-	// 		fd,
-	// 		buffer,
-	// 		0,
-	// 		16,
-	// 		bifHeader.offset_to_variable_resouces + 16 * file.indexOfFileInBif
-	// 	);
-	// 	const variableTable = {
-	// 		id: buffer.readUInt32LE(0),
-	// 		offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
-	// 		size_of_raw_data_chunk: buffer.readUInt32LE(8),
-	// 		resource_type: buffer.readUInt32LE(12)
-	// 	};
+		buffer = Buffer.alloc(16);
+		fs.readSync(
+			fd,
+			buffer,
+			0,
+			16,
+			bifHeader.offset_to_variable_resouces + 16 * file.indexOfFileInBif
+		);
+		const variableTable = {
+			id: buffer.readUInt32LE(0),
+			offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
+			size_of_raw_data_chunk: buffer.readUInt32LE(8),
+			resource_type: buffer.readUInt32LE(12)
+		};
 
-	// 	buffer = Buffer.alloc(variableTable.size_of_raw_data_chunk);
-	// 	fs.readSync(
-	// 		fd,
-	// 		buffer,
-	// 		0,
-	// 		variableTable.size_of_raw_data_chunk,
-	// 		variableTable.offset_into_variable_resource_raw_data
-	// 	);
+		buffer = Buffer.alloc(variableTable.size_of_raw_data_chunk);
+		fs.readSync(
+			fd,
+			buffer,
+			0,
+			variableTable.size_of_raw_data_chunk,
+			variableTable.offset_into_variable_resource_raw_data
+		);
 
-	// 	return buffer;
+		return buffer;
+	}
+
+	// extractErf(file, path, gameIndex) {
+	// 	const resoucePath = this.bifFiles[gameIndex].files[1];
+
+	// 	// let index = _.findIndex(resoucePath, 'fileName', file.erfFileName);
+
+	// 	// let fd = this.fs.openSync(
+	// 	// 	path + '/' + 'TexturePacks/' + file.erfFileName,
+	// 	// 	'r'
+	// 	// );
+
+	// 	// const buf = new Buffer(file.size);
+	// 	// this.fs.readSync(fd, buf, 0, file.size, file.offset);
+	// 	// return buf;
 	// }
 
-	extractErf(file, path, gameIndex) {
-		const resoucePath = this.bifFiles[gameIndex].files[1];
+	// getBifTree() {
+	// 	// if (!this.bifTree) {
+	// 	// 	this.buildBifTree();
+	// 	// }
 
-		// let index = _.findIndex(resoucePath, 'fileName', file.erfFileName);
-
-		// let fd = this.fs.openSync(
-		// 	path + '/' + 'TexturePacks/' + file.erfFileName,
-		// 	'r'
-		// );
-
-		// const buf = new Buffer(file.size);
-		// this.fs.readSync(fd, buf, 0, file.size, file.offset);
-		// return buf;
-	}
-
-	getBifTree() {
-		// if (!this.bifTree) {
-		// 	this.buildBifTree();
-		// }
-
-		// return this.bifTree;
-	}
+	// 	// return this.bifTree;
+	// }
 }

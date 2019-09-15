@@ -42,6 +42,8 @@ export class FileBrowserComponent {
 	/** The MatTreeFlatDataSource connects the control and flattener to provide data. */
 	dataSource: MatTreeFlatDataSource<FileNode, FlatTreeNode>;
 
+	selectedFile = null;
+
 	constructor(private lotorService: LotorService, private preferenceService: PreferenceService) {
 		this.treeFlattener = new MatTreeFlattener(
 			this.transformer,
@@ -80,7 +82,8 @@ export class FileBrowserComponent {
 			name: node.fileName,
 			type: node.files ? 'folder' : 'file',
 			level: level,
-			expandable: node.files
+			expandable: node.files,
+			file: node
 		};
 	}
 
@@ -102,5 +105,27 @@ export class FileBrowserComponent {
 	/** Get the children for the node. */
 	getChildren(node: any) {
 		return observableOf(node.files);
+	}
+
+	clicked(node) {
+		console.log(node);
+	}
+
+	async extract()  {
+		const remote = require('electron').remote;
+		const dialog = remote.dialog;
+		const fs = require('fs');
+
+		const fileNames = await dialog.showSaveDialog({defaultPath: this.selectedFile.name});
+		console.log(fileNames);
+
+		if (!fileNames) {
+			return false;
+		}
+
+		const buffer = this.selectedFile.file.bif.extractBif(this.selectedFile.file);
+
+
+		fs.writeFileSync(fileNames.filePath, buffer);
 	}
 }
