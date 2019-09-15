@@ -1,4 +1,3 @@
-import { Game } from './game';
 import { fileExtensionLookup } from './file-extensions';
 
 /*
@@ -23,35 +22,59 @@ interface ChitinHeader {
 	header_length: 60;
 }
 
+export interface BifArchive {
+	fileName: string;
+	files: BifArchive[] | BifFile[];
+}
+
+export interface BifFile {
+	bifIndex: number;
+	fileExtension: string;
+	fileName: string;
+	file_extension_code: number;
+	game: 'KOTOR' | 'TSL';
+	indexOfFileInBif: number;
+	leaf: boolean;
+	resref: string;
+	uniqueId: number;
+}
+
+export interface BifDef {
+	bif_drive: number;
+	bif_filename: string;
+	fileName: string;
+	length_of_filename: number;
+	offset_into_filename_table_for_filename: number;
+	size_of_file: number;
+	files?: BifFile[];
+}
+
+const fs = require('fs');
+
 export class Bif {
 	directory: string;
-	game: Game;
+	game: 'KOTOR' | 'TSL';
 
 	chitinHeader: ChitinHeader;
 
-	bifFiles: any;
+	bifFiles: BifDef[];
 
-	constructor(directory, game: Game) {
-		const fs = require('fs');
+	constructor(directory, game: 'KOTOR' | 'TSL') {
 
 		this.directory = directory;
 		this.game = game;
 
 		const fd = fs.openSync(directory + '/chitin.key', 'r');
 
-		this.chitinHeader = this.readChitinHeader(fd);
-		this.bifFiles = this.parseBifFileDataInChitin(fd, this.chitinHeader);
-		this.bifFiles = this.parseTableOfKeys(
-			fd,
-			this.bifFiles
-		);
+		this.chitinHeader = this.readChitinHeader(fd); // good
+		this.bifFiles = this.parseBifFileDataInChitin(fd);
+
+		this.parseTableOfKeys(fd);
 
 		fs.closeSync(fd);
 	}
 
-	parseTableOfKeys(fd, bifFiles) {
-		const fs = require('fs');
-
+	parseTableOfKeys(fd) {
 		for (let i = 0; i < this.chitinHeader.number_of_entries_in_chitin_key; i++) {
 			const buffer = Buffer.alloc(22);
 			fs.readSync(
@@ -67,7 +90,7 @@ export class Bif {
 				file_extension_code: buffer.readUInt16LE(16),
 				uniqueId: buffer.readUInt32LE(18),
 				leaf: true,
-				game: this.game.game,
+				game: this.game,
 				bifIndex: null,
 				indexOfFileInBif: null,
 				fileExtension: null,
@@ -81,79 +104,78 @@ export class Bif {
 			file.fileName = file.resref + '.' + file.fileExtension;
 			file.fileName = file.fileName.trim().replace(/\0/g, '');
 
-			if (!bifFiles[file.bifIndex]) { console.log('Error File!!!', file); }
-
-			if (!bifFiles[file.bifIndex].files) {
-				bifFiles[file.bifIndex].files = [];
+			if (!this.bifFiles[file.bifIndex]) {
+				console.log('Error File!!!', file);
 			}
 
-			bifFiles[file.bifIndex].files.push(file);
+			if (!this.bifFiles[file.bifIndex].files) {
+				this.bifFiles[file.bifIndex].files = [];
+			}
+
+			this.bifFiles[file.bifIndex].files.push(file);
 		}
 
-		bifFiles.forEach(function(ele) {
-			if (ele.files.length >= 100) {
-				const sorted = {};
-				ele.files.forEach(function(file) {
-					if (!sorted[file.fileExtension]) {
-						sorted[file.fileExtension] = [];
-					}
-					sorted[file.fileExtension].push(file);
-				});
+		// this.bifFiles.forEach(function(ele) {
+		// 	if (ele.files.length >= 100) {
+		// 		const sorted = {};
+		// 		ele.files.forEach((file as BifFile) => {
+		// 			if (!sorted[file.fileExtension]) {
+		// 				sorted[file.fileExtension] = [];
+		// 			}
+		// 			sorted[file.fileExtension].push(file);
+		// 		});
 
-				// _.forEach(sorted, function(resourceType){
-				for (const resourceTypeKey in sorted) {
-					if (sorted[resourceTypeKey].length >= 100) {
-						// alphabetize
-						const alphabetized = {};
-						sorted[resourceTypeKey].forEach(function(file) {
-							const letterKey = file.fileName.charAt(0);
-							if (!alphabetized[letterKey]) {
-								alphabetized[letterKey] = [];
-							}
-							alphabetized[letterKey].push(file);
-						});
+		// 		// _.forEach(sorted, function(resourceType){
+		// 		for (const resourceTypeKey in sorted) {
+		// 			if (sorted[resourceTypeKey].length >= 100) {
+		// 				// alphabetize
+		// 				const alphabetized = {};
+		// 				sorted[resourceTypeKey].forEach(function(file) {
+		// 					const letterKey = file.fileName.charAt(0);
+		// 					if (!alphabetized[letterKey]) {
+		// 						alphabetized[letterKey] = [];
+		// 					}
+		// 					alphabetized[letterKey].push(file);
+		// 				});
 
-						const alphabetizedFiles = [];
-						for (const key in alphabetized) {
-							if (alphabetized[key]){
-								alphabetizedFiles.push({
-									files: alphabetized[key],
-									fileName:
-										key + ' (' + alphabetized[key].length + ')'
-								});
-							}
-						}
+		// 				const alphabetizedFiles = [];
+		// 				for (const key in alphabetized) {
+		// 					if (alphabetized[key]) {
+		// 						alphabetizedFiles.push({
+		// 							files: alphabetized[key],
+		// 							fileName:
+		// 								key + ' (' + alphabetized[key].length + ')'
+		// 						});
+		// 					}
+		// 				}
 
-						sorted[resourceTypeKey] = alphabetizedFiles;
-					}
-				}
+		// 				sorted[resourceTypeKey] = alphabetizedFiles;
+		// 			}
+		// 		}
 
-				const files = [];
-				for (const key in sorted) {
-					if (sorted[key]){
-						files.push({ files: sorted[key], fileName: key });
-					}
-				}
+		// 		const files = [];
+		// 		for (const key in sorted) {
+		// 			if (sorted[key]) {
+		// 				files.push({ files: sorted[key], fileName: key });
+		// 			}
+		// 		}
 
-				ele.files = files;
-			}
-		});
-
-		return bifFiles;
+		// 		ele.files = files;
+		// 	}
+		// });
 	}
 
-	parseBifFileDataInChitin(fd, chitinHeader) {
-		const bifFiles = [];
-		const fs = require('fs');
+	parseBifFileDataInChitin(fd): BifDef[] {
+		const bifDefs = [];
 
-		for (let i = 0; i < chitinHeader.number_of_bif_files; i++) {
+		for (let i = 0; i < this.chitinHeader.number_of_bif_files; i++) {
 			const buffer = Buffer.alloc(12);
 			fs.readSync(
 				fd,
 				buffer,
 				0,
 				12,
-				chitinHeader.offset_to_table_of_files + i * 12
+				this.chitinHeader.offset_to_table_of_files + i * 12
 			);
 
 			const bif = {
@@ -181,14 +203,13 @@ export class Bif {
 				.trim()
 				.replace(/\0/g, '');
 
-			bifFiles.push(bif);
+			bifDefs.push(bif);
 		}
 
-		return bifFiles;
+		return bifDefs;
 	}
 
 	readChitinHeader(fd): ChitinHeader {
-		const fs = require('fs');
 
 		const buffer = Buffer.alloc(60);
 		fs.readSync(fd, buffer, 0, 60, 0);
@@ -204,54 +225,52 @@ export class Bif {
 		};
 	}
 
-	extractBif(file, path, index) {
-		const fs = require('fs');
+	// extractBif(file, path, index) {
+	// 	const fd = fs.openSync(
+	// 		path +
+	// 			'/' +
+	// 			this.bifFiles[index].files[0].files[file.bifIndex].bif_filename
+	// 				.trim()
+	// 				.replace(/\\/g, '/')
+	// 				.replace(/\0/g, ''),
+	// 		'r'
+	// 	);
 
-		const fd = fs.openSync(
-			path +
-				'/' +
-				this.bifFiles[index].files[0].files[file.bifIndex].bif_filename
-					.trim()
-					.replace(/\\/g, '/')
-					.replace(/\0/g, ''),
-			'r'
-		);
+	// 	let buffer = Buffer.alloc(20);
+	// 	fs.readSync(fd, buffer, 0, 20, 0);
 
-		let buffer = new Buffer(20);
-		fs.readSync(fd, buffer, 0, 20, 0);
+	// 	const bifHeader = {
+	// 		number_of_variable_resources: buffer.readUInt32LE(8),
+	// 		number_of_fixed_resouces: buffer.readUInt32LE(12),
+	// 		offset_to_variable_resouces: buffer.readUInt32LE(16)
+	// 	};
 
-		const bifHeader = {
-			number_of_variable_resources: buffer.readUInt32LE(8),
-			number_of_fixed_resouces: buffer.readUInt32LE(12),
-			offset_to_variable_resouces: buffer.readUInt32LE(16)
-		};
+	// 	buffer = Buffer.alloc(16);
+	// 	fs.readSync(
+	// 		fd,
+	// 		buffer,
+	// 		0,
+	// 		16,
+	// 		bifHeader.offset_to_variable_resouces + 16 * file.indexOfFileInBif
+	// 	);
+	// 	const variableTable = {
+	// 		id: buffer.readUInt32LE(0),
+	// 		offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
+	// 		size_of_raw_data_chunk: buffer.readUInt32LE(8),
+	// 		resource_type: buffer.readUInt32LE(12)
+	// 	};
 
-		buffer = Buffer.alloc(16);
-		fs.readSync(
-			fd,
-			buffer,
-			0,
-			16,
-			bifHeader.offset_to_variable_resouces + 16 * file.indexOfFileInBif
-		);
-		const variableTable = {
-			id: buffer.readUInt32LE(0),
-			offset_into_variable_resource_raw_data: buffer.readUInt32LE(4),
-			size_of_raw_data_chunk: buffer.readUInt32LE(8),
-			resource_type: buffer.readUInt32LE(12)
-		};
+	// 	buffer = Buffer.alloc(variableTable.size_of_raw_data_chunk);
+	// 	fs.readSync(
+	// 		fd,
+	// 		buffer,
+	// 		0,
+	// 		variableTable.size_of_raw_data_chunk,
+	// 		variableTable.offset_into_variable_resource_raw_data
+	// 	);
 
-		buffer = Buffer.alloc(variableTable.size_of_raw_data_chunk);
-		fs.readSync(
-			fd,
-			buffer,
-			0,
-			variableTable.size_of_raw_data_chunk,
-			variableTable.offset_into_variable_resource_raw_data
-		);
-
-		return buffer;
-	}
+	// 	return buffer;
+	// }
 
 	extractErf(file, path, gameIndex) {
 		const resoucePath = this.bifFiles[gameIndex].files[1];

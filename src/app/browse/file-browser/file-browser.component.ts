@@ -5,9 +5,9 @@ import {
 } from '@angular/material/tree';
 import { of as observableOf } from 'rxjs';
 import { FlatTreeControl } from '@angular/cdk/tree';
-import { files } from './example-data';
 import { LotorService } from '../../lotor/lotor.service';
 import { PreferenceService } from '../../shared/services/preference.service';
+import { Game } from '../../lotor/game';
 
 /** File node data with possible child nodes. */
 export interface FileNode {
@@ -43,12 +43,6 @@ export class FileBrowserComponent {
 	dataSource: MatTreeFlatDataSource<FileNode, FlatTreeNode>;
 
 	constructor(private lotorService: LotorService, private preferenceService: PreferenceService) {
-		preferenceService.getPreferences().subscribe(pref => {
-			pref.directories.forEach(directory => {
-				console.log(lotorService.openDir(directory));
-			})
-		})
-
 		this.treeFlattener = new MatTreeFlattener(
 			this.transformer,
 			this.getLevel,
@@ -64,16 +58,29 @@ export class FileBrowserComponent {
 			this.treeControl,
 			this.treeFlattener
 		);
-		this.dataSource.data = files;
+
+		const games: any[] = [];
+
+		preferenceService.getPreferences().subscribe(pref => {
+			pref.directories.forEach(directory => {
+				const game = lotorService.openDir(directory);
+
+				games.push(game.getTree());
+
+			});
+			this.dataSource.data = games as FileNode[];
+		});
+
+
 	}
 
 	/** Transform the data to something the tree can read. */
-	transformer(node: FileNode, level: number) {
+	transformer(node: any, level: number) {
 		return {
-			name: node.name,
-			type: node.type,
+			name: node.fileName,
+			type: node.files ? 'folder' : 'file',
 			level: level,
-			expandable: !!node.children
+			expandable: node.files
 		};
 	}
 
@@ -93,7 +100,7 @@ export class FileBrowserComponent {
 	}
 
 	/** Get the children for the node. */
-	getChildren(node: FileNode) {
-		return observableOf(node.children);
+	getChildren(node: any) {
+		return observableOf(node.files);
 	}
 }
