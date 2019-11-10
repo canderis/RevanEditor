@@ -8,7 +8,7 @@ export class Erf {
 	directory: string;
 	game: 'KOTOR' | 'TSL';
 
-	erfArchives: ErfArchive[];
+	erfFiles: ErfArchive[];
 
 	constructor(directory, game: 'KOTOR' | 'TSL') {
 		this.directory = directory;
@@ -17,7 +17,7 @@ export class Erf {
 		const texturesPath = path.join(directory, 'TexturePacks');
 		const dir = fs.readdirSync(texturesPath);
 
-		this.erfArchives = dir.map( v => new ErfArchive(path.join(texturesPath, v), this.game));
+		this.erfFiles = dir.map( v => new ErfArchive(v, path.join(texturesPath, v), this.game));
 
 		console.log(this);
 	}

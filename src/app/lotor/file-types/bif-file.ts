@@ -1,8 +1,9 @@
 import { BifArchive } from './bif-archive';
 import { FileExtensions } from '../file-extensions';
+import { KotorFile } from './archive';
 
 const fs = require('fs');
-export class BifFile {
+export class BifFile implements KotorFile {
 	bifIndex: number;
 	indexOfFileInBif: number;
 	fileExtension: string;

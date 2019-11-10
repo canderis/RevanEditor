@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { Game } from './game';
 import { BifArchive } from './file-types/bif-archive';
 import { BifFile } from './file-types/bif-file';
+import { ErfArchive } from './file-types/erf-archive';
+import { Archive, KotorFile } from './file-types/archive';
 
 @Injectable({
 	providedIn: 'root'
@@ -27,12 +29,16 @@ export class LotorService {
 				{
 					fileName: 'Bifs',
 					files: this.format(game.bif.bifFiles)
+				},
+				{
+					fileName: 'Erfs',
+					files: this.format(game.erf.erfFiles)
 				}
 			]
 		};
 	}
 
-	format(files: BifArchive[]) {
+	format(files: Archive[]) {
 		return files.map(archive => {
 			if (archive.files.length > 100) {
 				return { ...archive, files: this.formatByExt(archive.files) };
@@ -41,8 +47,8 @@ export class LotorService {
 			}
 		});
 	}
-	formatByExt(files: BifFile[]) {
-		const sorted = new Map<string, BifFile[]>();
+	formatByExt(files: KotorFile[] ) {
+		const sorted = new Map<string, KotorFile[]>();
 		files.forEach(file => {
 			if ( !sorted.has(file.fileExtension) ) {
 				sorted.set(file.fileExtension, []);
@@ -68,8 +74,8 @@ export class LotorService {
 		return out;
 	}
 
-	formatByAlphabet(files: BifFile[]) {
-		const sorted = new Map<string, BifFile[]>();
+	formatByAlphabet(files: KotorFile[]) {
+		const sorted = new Map<string, KotorFile[]>();
 		files.forEach(file => {
 			if ( !sorted.has(file.fileName.charAt(0)) ) {
 				sorted.set(file.fileName.charAt(0), []);

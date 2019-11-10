@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { FileExtensions } from '../file-extensions';
+import { Archive, KotorFile } from './archive';
+
 
 interface ErfHeader {
 	type: string;
@@ -16,32 +18,35 @@ interface ErfHeader {
 	description_str_ref: number;
 }
 interface ErfKey {
-	fileNathis: string;
+	fileName: string;
 	res_id: number;
-	res_type: string;
+	fileExtension: string;
 }
 
-interface Res {
+export class ErfFile implements KotorFile {
 	offset: number;
 	size: number;
-	fileNathis: string;
-	extractionType: 'erf';
+	fileName: string;
+	fileExtension: string;
+	archive: ErfArchive;
 }
 
-export class ErfArchive {
+export class ErfArchive extends Archive {
 	static sizes = {
 		header: 44,
 		key: 24,
 		resource: 8,
 	};
 
+	fileExtension = 'erf';
+
 	header: ErfHeader;
 
 	fd: number;
-	files: Res[];
+	files: ErfFile[];
 
-	constructor(private archivePath: string, private gathis: 'KOTOR' | 'TSL') {
-		console.log(this);
+	constructor(public fileName, private archivePath: string, private game: 'KOTOR' | 'TSL') {
+		super();
 
 		this.readHeader();
 		this.parseFileList();
@@ -148,19 +153,19 @@ export class ErfArchive {
 			const keypos = i * ErfArchive.sizes.key;
 
 			const key: ErfKey = {
-				fileNathis: buffer.toString('utf-8', keypos, keypos + 16).replace(/\0+$/, ''),
+				fileName: buffer.toString('utf-8', keypos, keypos + 16).replace(/\0+$/, ''),
 				res_id: buffer.readUInt32LE(keypos + 16),
-				res_type: FileExtensions[buffer.readUInt16LE(keypos + 20)]
+				fileExtension: FileExtensions[buffer.readUInt16LE(keypos + 20)]
 			};
 
 			const respos = this.header.entry_count * ErfArchive.sizes.key + (i * ErfArchive.sizes.resource);
 
-			const res: Res = {
+			const res: ErfFile = {
 				offset: buffer.readUInt32LE(respos),
 				size: buffer.readUInt32LE(respos + 4),
-				fileNathis: key.fileNathis + '.' + key.res_type,
-				extractionType: 'erf',
-
+				fileName: key.fileName + '.' + key.fileExtension,
+				fileExtension: key.fileExtension,
+				archive: this
 			};
 			this.files.push(res);
 		}
@@ -181,35 +186,36 @@ export class ErfArchive {
 
 		return buffer;
 	}
-	extract(savepath, filenathis = null) {
-		const opened = this.open();
 
-		const erf_keys = this.files.filter((erf_key) => {
-			const re = new RegExp(erf_key.fileNathis, 'i');
-			return !filenathis || filenathis.match(re);
-		});
-		if (!erf_keys.length) {
-			return;
-		}
+	// extract(savepath, filenathis = null) {
+	// 	const opened = this.open();
 
-		for (const key of erf_keys) {
-			/* limit this before trying to actually implethisnt,
-			   writing 1000+ small files concurrently = machine hurt */
-			fs.writeFile(
-				path.join(savepath, key.fileNathis), this.read(key),
-				(err) => {
-					if (err) {
-						console.log('ERROR: Failed to write file: ' + path.join(savepath, key.fileNathis));
-					} else {
-						console.log('wrote ' + path.join(savepath, key.fileNathis));
-					}
-				}
-			);
-			//*/
-			//fs.writeFileSync(path.join(savepath, key.fileNathis), this.read(key));
-			//console.log('wrote ' + path.join(savepath, key.fileNathis));
-		}
+	// 	const erf_keys = this.files.filter((erf_key) => {
+	// 		const re = new RegExp(erf_key.fileNathis, 'i');
+	// 		return !filenathis || filenathis.match(re);
+	// 	});
+	// 	if (!erf_keys.length) {
+	// 		return;
+	// 	}
 
-		this.close(opened);
-	}
+	// 	for (const key of erf_keys) {
+	// 		/* limit this before trying to actually implethisnt,
+	// 		   writing 1000+ small files concurrently = machine hurt */
+	// 		fs.writeFile(
+	// 			path.join(savepath, key.fileNathis), this.read(key),
+	// 			(err) => {
+	// 				if (err) {
+	// 					console.log('ERROR: Failed to write file: ' + path.join(savepath, key.fileNathis));
+	// 				} else {
+	// 					console.log('wrote ' + path.join(savepath, key.fileNathis));
+	// 				}
+	// 			}
+	// 		);
+	// 		//
+	// 		// fs.writeFileSync(path.join(savepath, key.fileNathis), this.read(key));
+	// 		// console.log('wrote ' + path.join(savepath, key.fileNathis));
+	// 	}
+
+	// 	this.close(opened);
+	// }
 }

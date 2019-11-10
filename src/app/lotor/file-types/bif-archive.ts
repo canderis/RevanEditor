@@ -1,6 +1,7 @@
 import { BifFile } from './bif-file';
+import { Archive } from './archive';
 
-export class BifArchive {
+export class BifArchive extends Archive {
 	fileName: string;
 	directory: string;
 	files: BifFile[] = [];
@@ -12,6 +13,7 @@ export class BifArchive {
 		public bif_drive: number,
 		public bif_filename: string,
 		directory: string) {
+			super();
 		this.fileName = bif_filename.replace('data\\', '').trim().replace(/\0/g, '');
 
 		this.directory = `${directory}/${bif_filename}`
