@@ -54,7 +54,7 @@ export class BifFile implements KotorFile {
 		this.bifIndex = this.uniqueId >> 20;
 		this.indexOfFileInBif = this.uniqueId - (this.bifIndex << 20);
 		this.fileExtension = FileExtensions[this.file_extension_code];
-		this. fileName = (`${this.resref}.${this.fileExtension}`).trim().replace(/\0/g, '');
+		this.fileName = (`${this.resref}.${this.fileExtension}`).trim().replace(/\0/g, '');
 	}
 
 }

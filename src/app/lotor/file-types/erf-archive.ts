@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { FileExtensions } from '../file-extensions';
-import { Archive, KotorFile } from './archive';
+import { Archive } from './archive';
+import { ErfFile } from './erf-file';
 
 
 interface ErfHeader {
@@ -21,14 +22,6 @@ interface ErfKey {
 	fileName: string;
 	res_id: number;
 	fileExtension: string;
-}
-
-export class ErfFile implements KotorFile {
-	offset: number;
-	size: number;
-	fileName: string;
-	fileExtension: string;
-	archive: ErfArchive;
 }
 
 export class ErfArchive extends Archive {
@@ -160,62 +153,21 @@ export class ErfArchive extends Archive {
 
 			const respos = this.header.entry_count * ErfArchive.sizes.key + (i * ErfArchive.sizes.resource);
 
-			const res: ErfFile = {
-				offset: buffer.readUInt32LE(respos),
-				size: buffer.readUInt32LE(respos + 4),
-				fileName: key.fileName + '.' + key.fileExtension,
-				fileExtension: key.fileExtension,
-				archive: this
-			};
+			const res = new ErfFile(
+				key.fileName + '.' + key.fileExtension,
+				key.fileExtension,
+				buffer.readUInt32LE(respos),
+				buffer.readUInt32LE(respos + 4),
+			);
+			res.archive = this;
+
 			this.files.push(res);
 		}
 
 		this.close(opened);
 	}
-	read(key) {
-		const opened = this.open();
-
-		if (!this.header) {
-			this.readHeader();
-		}
-
-		const buffer = Buffer.alloc(key.size);
-		fs.readSync(this.fd, buffer, 0, key.size, key.offset);
-
-		this.close(opened);
-
-		return buffer;
-	}
 
 	// extract(savepath, filenathis = null) {
-	// 	const opened = this.open();
 
-	// 	const erf_keys = this.files.filter((erf_key) => {
-	// 		const re = new RegExp(erf_key.fileNathis, 'i');
-	// 		return !filenathis || filenathis.match(re);
-	// 	});
-	// 	if (!erf_keys.length) {
-	// 		return;
-	// 	}
-
-	// 	for (const key of erf_keys) {
-	// 		/* limit this before trying to actually implethisnt,
-	// 		   writing 1000+ small files concurrently = machine hurt */
-	// 		fs.writeFile(
-	// 			path.join(savepath, key.fileNathis), this.read(key),
-	// 			(err) => {
-	// 				if (err) {
-	// 					console.log('ERROR: Failed to write file: ' + path.join(savepath, key.fileNathis));
-	// 				} else {
-	// 					console.log('wrote ' + path.join(savepath, key.fileNathis));
-	// 				}
-	// 			}
-	// 		);
-	// 		//
-	// 		// fs.writeFileSync(path.join(savepath, key.fileNathis), this.read(key));
-	// 		// console.log('wrote ' + path.join(savepath, key.fileNathis));
-	// 	}
-
-	// 	this.close(opened);
 	// }
 }

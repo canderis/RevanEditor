@@ -18,7 +18,5 @@ export class Erf {
 		const dir = fs.readdirSync(texturesPath);
 
 		this.erfFiles = dir.map( v => new ErfArchive(v, path.join(texturesPath, v), this.game));
-
-		console.log(this);
 	}
 }
