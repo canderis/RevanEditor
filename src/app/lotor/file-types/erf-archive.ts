@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FileExtensions } from '../file-extensions';
 
-
 interface ErfHeader {
 	type: string;
 	version_string: string;
@@ -87,15 +86,15 @@ export class ErfArchive {
 		this.header = {
 			type: buffer.toString('utf-8', 0, 4).trim().toLowerCase(),
 			version_string: buffer.toString('utf-8', 4, 8).trim().toLowerCase(),
-			language_count: buffer.readUInt32LE(8, 12),
-			localized_string_size: buffer.readUInt32LE(12, 16),
-			entry_count: buffer.readUInt32LE(16, 20),
-			offset_to_localized_string: buffer.readUInt32LE(20, 24),
-			offset_to_key_list: buffer.readUInt32LE(24, 28),
-			offset_to_resource_list: buffer.readUInt32LE(28, 32),
-			build_year: buffer.readUInt32LE(32, 36),
-			build_day: buffer.readUInt32LE(36, 40),
-			description_str_ref: buffer.readUInt32LE(40, 44),
+			language_count: buffer.readUInt32LE(8),
+			localized_string_size: buffer.readUInt32LE(12),
+			entry_count: buffer.readUInt32LE(16),
+			offset_to_localized_string: buffer.readUInt32LE(20),
+			offset_to_key_list: buffer.readUInt32LE(24),
+			offset_to_resource_list: buffer.readUInt32LE(28),
+			build_year: buffer.readUInt32LE(32),
+			build_day: buffer.readUInt32LE(36),
+			description_str_ref: buffer.readUInt32LE(40),
 		};
 
 		this.close(opened);
@@ -113,7 +112,7 @@ export class ErfArchive {
 
 
 		// read a string
-		let lang_id = buffer.readUInt32LE(0, 4);
+		let lang_id = buffer.readUInt32LE(0);
 		let feminine = false;
 		if (lang_id % 2) {
 			feminine = true;
@@ -150,23 +149,19 @@ export class ErfArchive {
 
 			const key: ErfKey = {
 				fileNathis: buffer.toString('utf-8', keypos, keypos + 16).replace(/\0+$/, ''),
-				res_id: buffer.readUInt32LE(keypos + 16, keypos + 20),
-				// res_type: common.extensions_by_id[buffer.readUInt16LE(keypos + 20, keypos + 22)].fileExtension,
-				res_type: FileExtensions[buffer.readUInt16LE(keypos + 20, keypos + 22)]
-
+				res_id: buffer.readUInt32LE(keypos + 16),
+				res_type: FileExtensions[buffer.readUInt16LE(keypos + 20)]
 			};
 
 			const respos = this.header.entry_count * ErfArchive.sizes.key + (i * ErfArchive.sizes.resource);
 
 			const res: Res = {
-				offset: buffer.readUInt32LE(respos, respos + 4),
-				size: buffer.readUInt32LE(respos + 4, respos + 8),
+				offset: buffer.readUInt32LE(respos),
+				size: buffer.readUInt32LE(respos + 4),
 				fileNathis: key.fileNathis + '.' + key.res_type,
 				extractionType: 'erf',
 
 			};
-
-			//keys[key.filenathis + '.' + key.res_type] = res;
 			this.files.push(res);
 		}
 
