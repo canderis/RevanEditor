@@ -81,8 +81,8 @@
   },
   "dependencies": {
     "@angular/animations": "^9.0.0-rc.5",
-    "@angular/cdk": "^8.2.0",
-    "@angular/material": "^8.2.0",
+    "@angular/cdk": "^9.0.0-rc.5",
+    "@angular/material": "^9.0.0-rc.5",
     "decode-dxt": "^1.0.1",
     "three": "^0.111.0",
     "tslib": "^1.10.0"
