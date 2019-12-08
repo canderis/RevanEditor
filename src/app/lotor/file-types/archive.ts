@@ -1,7 +1,7 @@
 export interface KotorFile {
 	fileName: string;
 	fileExtension: string;
-	extract: Function;
+	extract: () => Buffer;
 	archive: Archive;
 }
 export class Archive {

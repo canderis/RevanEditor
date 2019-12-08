@@ -2,7 +2,7 @@
   "rulesDirectory": ["node_modules/codelyzer"],
   "rules": {
 	"no-implicit-dependencies": true,
-	"noImplicitAny": true,
+	"no-unsafe-any": true,
     "arrow-return-shorthand": true,
     "callable-types": true,
     "class-name": true,

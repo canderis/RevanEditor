@@ -9,6 +9,8 @@ import { LotorService } from '../../lotor/lotor.service';
 import { PreferenceService } from '../../shared/services/preference.service';
 import { Game } from '../../lotor/game';
 import { TPCLoader } from '../../lotor/file-types/tpc';
+import { KotorFile } from '../../lotor/file-types/archive';
+import { writeTGA } from '../../lotor/file-types/tga';
 
 /** File node data with possible child nodes. */
 export interface FileNode {
@@ -26,6 +28,7 @@ export interface FlatTreeNode {
 	type: string;
 	level: number;
 	expandable: boolean;
+	file: KotorFile;
 }
 
 @Component({
@@ -43,7 +46,7 @@ export class FileBrowserComponent {
 	/** The MatTreeFlatDataSource connects the control and flattener to provide data. */
 	dataSource: MatTreeFlatDataSource<FileNode, FlatTreeNode>;
 
-	selectedFile = null;
+	selectedFile: FlatTreeNode = null;
 
 	constructor(private lotorService: LotorService, private preferenceService: PreferenceService) {
 		this.treeFlattener = new MatTreeFlattener(
@@ -62,7 +65,7 @@ export class FileBrowserComponent {
 			this.treeFlattener
 		);
 
-		const games: any[] = [];
+		const games = [];
 
 		preferenceService.getPreferences().subscribe(pref => {
 			pref.directories.forEach(directory => {
@@ -124,19 +127,24 @@ export class FileBrowserComponent {
 			return false;
 		}
 
-		const buffer = this.selectedFile.file.extract(this.selectedFile.file);
+		const buffer = this.selectedFile.file.extract();
 
 		if (this.selectedFile.file.fileExtension === 'tpc') {
 			const tpcLoader = new TPCLoader();
 			console.log(buffer);
 			const f = tpcLoader.load(buffer, (texture) => {
 				console.log(texture);
+				writeTGA(texture, fileNames.filePath, { pixel_size: texture.pixelDepth });
 			}, (error) => {
 				console.log(error);
 			});
 			console.log(f);
+
+		}
+		else {
+			fs.writeFileSync(fileNames.filePath, buffer);
 		}
 
-		fs.writeFileSync(fileNames.filePath, buffer);
+
 	}
 }

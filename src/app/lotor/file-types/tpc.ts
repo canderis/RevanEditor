@@ -17,55 +17,63 @@ export const TPCLoader = function(manager = undefined) {
 		manager !== undefined ? manager : THREE.DefaultLoadingManager;
 };
 
-TPCLoader.prototype.load = function(buffer, onLoad, onError) {
-	let scope = this;
+function toArrayBuffer(buf: Buffer) {
+	const ab = new ArrayBuffer(buf.length);
+	const view = new Uint8Array(ab);
+	for (let i = 0; i < buf.length; ++i) {
+		view[i] = buf[i];
+	}
+	return ab;
+}
 
-	let texture: TPCTexture = new THREE.Texture();
+TPCLoader.prototype.load = function(buffer: Buffer, onLoad, onError) {
+	const scope = this;
+
+	const texture: TPCTexture = new THREE.Texture();
 
 	// let loader = new THREE.FileLoader(this.manager);
 	// loader.setResponseType('arraybuffer');
 
 	// loader.load(
 	// 	url,
-		// function(buffer) {
-			try {
-				texture.image = scope.parse(buffer);
-			} catch (err) {
-				if (onError) {
-					onError(err);
-				}
-				return;
-			}
-			if (
-				texture.image &&
-				texture.image.hasAttribute &&
-				texture.image.hasAttribute('pixelDepth')
-			) {
-				texture.pixelDepth = parseInt(
-					texture.image.getAttribute('pixelDepth'), 10
-				);
-				texture.image.removeAttribute('pixelDepth');
-			}
-			// console.log(texture.image);
-			if (
-				texture.image &&
-				texture.image.hasAttribute &&
-				texture.image.hasAttribute('txiValue')
-			) {
-				texture.extensionString = texture.image.getAttribute(
-					'txiValue'
-				);
-				texture.image.removeAttribute('txiValue');
-			}
-			// texture.sourceFile = url;
-			texture.needsUpdate = true;
+	// function(buffer) {
+	try {
+		texture.image = scope.parse(toArrayBuffer(buffer));
+	} catch (err) {
+		if (onError) {
+			onError(err);
+		}
+		return;
+	}
+	if (
+		texture.image &&
+		texture.image.hasAttribute &&
+		texture.image.hasAttribute('pixelDepth')
+	) {
+		texture.pixelDepth = parseInt(
+			texture.image.getAttribute('pixelDepth'),
+			10
+		);
+		texture.image.removeAttribute('pixelDepth');
+	}
+	// console.log(texture.image);
+	if (
+		texture.image &&
+		texture.image.hasAttribute &&
+		texture.image.hasAttribute('txiValue')
+	) {
+		texture.extensionString = texture.image.getAttribute('txiValue');
+		texture.image.removeAttribute('txiValue');
+	}
+	// texture.sourceFile = url;
+	texture.needsUpdate = true;
 
-			if (onLoad !== undefined) {
-				onLoad(texture);
-			}
-		// },
-		// onProgress,
-		// onError
+	if (onLoad !== undefined) {
+		onLoad(texture);
+	}
+	// },
+	// onProgress,
+	// onError
 	// );
 
 	return texture;
@@ -342,7 +350,8 @@ TPCLoader.prototype.parse = function(buffer) {
 				header.height > header.width
 			) {
 				// cubemap?
-				header.frame_count = parseInt(header.height, 10) /parseInt(header.width, 10);
+				header.frame_count =
+					parseInt(header.height, 10) / parseInt(header.width, 10);
 				header.numX = 1;
 				header.numY = 6;
 				header.frame_height = header.frame_width;
@@ -566,12 +575,12 @@ TPCLoader.prototype.parse = function(buffer) {
 		image,
 		palettes
 	) {
-		let colormap = palettes;
+		const colormap = palettes;
 		let color,
 			i = 0,
 			x,
 			y;
-		let width = header.width;
+		const width = header.width;
 
 		for (y = y_start; y !== y_end; y += y_step) {
 			for (x = x_start; x !== x_end; x += x_step, i++) {
@@ -600,7 +609,7 @@ TPCLoader.prototype.parse = function(buffer) {
 			i = 0,
 			x,
 			y;
-		let width = header.width;
+		const width = header.width;
 
 		for (y = y_start; y !== y_end; y += y_step) {
 			for (x = x_start; x !== x_end; x += x_step, i += 2) {
@@ -628,7 +637,7 @@ TPCLoader.prototype.parse = function(buffer) {
 		let i = 0,
 			x,
 			y;
-		let width = header.width;
+		const width = header.width;
 
 		for (y = y_start; y !== y_end; y += y_step) {
 			for (x = x_start; x !== x_end; x += x_step, i += 3) {
@@ -655,7 +664,7 @@ TPCLoader.prototype.parse = function(buffer) {
 		let i = 0,
 			x,
 			y;
-		let width = header.frame_width;
+		const width = header.frame_width;
 
 		console.log('read 32 bit ', y_start, y_end, x_start, x_end);
 		for (y = y_start; y !== y_end; y += y_step) {
@@ -683,7 +692,7 @@ TPCLoader.prototype.parse = function(buffer) {
 		let i = 0,
 			x,
 			y;
-		let width = header.frame_width;
+		const width = header.frame_width;
 
 		console.log('read 32 bit ', y_start, y_end, x_start, x_end);
 		for (y = y_start; y !== y_end; y += y_step) {
@@ -708,8 +717,6 @@ TPCLoader.prototype.parse = function(buffer) {
 		x_end,
 		img
 	) {
-
-
 		/*
 	  console.log(img.byteOffset);
 	  console.log(img.byteLength);
@@ -727,7 +734,7 @@ TPCLoader.prototype.parse = function(buffer) {
 		let i = 0,
 			x,
 			y;
-		let width = header.width;
+		const width = header.width;
 
 		for (y = y_start; y !== y_end; y += y_step) {
 			for (x = x_start; x !== x_end; x += x_step, i += 4) {
@@ -765,7 +772,7 @@ TPCLoader.prototype.parse = function(buffer) {
 		let i = 0,
 			x,
 			y;
-		let width = header.width;
+		const width = header.width;
 
 		for (y = y_start; y !== y_end; y += y_step) {
 			for (x = x_start; x !== x_end; x += x_step, i += 4) {
@@ -945,15 +952,15 @@ TPCLoader.prototype.parse = function(buffer) {
 
 	/*
 	 */
-	let canvas = document.createElement('canvas');
+	const canvas = document.createElement('canvas');
 	canvas.width = header.width;
 	canvas.height = header.height;
 
-	let context = canvas.getContext('2d');
-	let imageData = context.createImageData(header.width, header.height);
+	const context = canvas.getContext('2d');
+	const imageData = context.createImageData(header.width, header.height);
 
-	let result = tpcParse(use_dxt, header, offset, content);
-	let rgbaData = getTpcRGBA(
+	const result = tpcParse(use_dxt, header, offset, content);
+	const rgbaData = getTpcRGBA(
 		imageData.data,
 		header.width,
 		header.height,
@@ -961,6 +968,7 @@ TPCLoader.prototype.parse = function(buffer) {
 		header
 	);
 
+	console.log('img data', imageData);
 	context.putImageData(imageData, 0, 0);
 
 	// tga2tpc CUSTOM:
