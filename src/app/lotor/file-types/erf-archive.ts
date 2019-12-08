@@ -166,8 +166,4 @@ export class ErfArchive extends Archive {
 
 		this.close(opened);
 	}
-
-	// extract(savepath, filenathis = null) {
-
-	// }
 }

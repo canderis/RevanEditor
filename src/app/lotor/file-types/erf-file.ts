@@ -4,10 +4,6 @@ import { ErfArchive } from './erf-archive';
 
 export class ErfFile implements KotorFile {
 	archive: ErfArchive;
-	// fileName: string;
-	// fileExtension: string;
-	// offset: number;
-	// size: number;
 
 	constructor(
 		public fileName: string,
@@ -17,8 +13,6 @@ export class ErfFile implements KotorFile {
 	) {}
 
 	extract() {
-		console.log('extracting');
-
 		const opened = this.archive.open();
 
 		const buffer = Buffer.alloc(this.size);

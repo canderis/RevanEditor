@@ -8,6 +8,7 @@ import { FlatTreeControl } from '@angular/cdk/tree';
 import { LotorService } from '../../lotor/lotor.service';
 import { PreferenceService } from '../../shared/services/preference.service';
 import { Game } from '../../lotor/game';
+import { TPCLoader } from '../../lotor/file-types/tpc';
 
 /** File node data with possible child nodes. */
 export interface FileNode {
@@ -125,6 +126,16 @@ export class FileBrowserComponent {
 
 		const buffer = this.selectedFile.file.extract(this.selectedFile.file);
 
+		if (this.selectedFile.file.fileExtension === 'tpc') {
+			const tpcLoader = new TPCLoader();
+			console.log(buffer);
+			const f = tpcLoader.load(buffer, (texture) => {
+				console.log(texture);
+			}, (error) => {
+				console.log(error);
+			});
+			console.log(f);
+		}
 
 		fs.writeFileSync(fileNames.filePath, buffer);
 	}
