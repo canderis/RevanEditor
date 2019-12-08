@@ -1,5 +1,6 @@
 import { BifFile } from './bif-file';
 import { BifArchive } from './bif-archive';
+import * as fs from 'fs';
 
 /*
 	The chitin header gives information on how to parse the contents of the bif file.
@@ -13,8 +14,6 @@ import { BifArchive } from './bif-archive';
 	build_day: buffer.readUInt32LE(28),
 	header_length: 60
 */
-
-const fs = require('fs');
 
 export class Chitin {
 	_directory: string;
@@ -30,13 +29,13 @@ export class Chitin {
 
 	fileTable: BifArchive[];
 
-	constructor(directory, fd) {
+	constructor(directory: string, fd: number) {
 		this._directory = directory;
 
 		this.readChitinHeader(fd);
 	}
 
-	readChitinHeader(fd) {
+	readChitinHeader(fd: number) {
 		const buffer = Buffer.alloc(this.__HEADER_LENGTH__);
 		fs.readSync(fd, buffer, 0, this.__HEADER_LENGTH__, 0);
 
@@ -48,13 +47,13 @@ export class Chitin {
 		this.build_day = buffer.readUInt32LE(28);
 	}
 
-	getBifArchives(fd) {
+	getBifArchives(fd: number) {
 		if (!this.fileTable) {
 			this.parseBifArchives(fd);
 		}
 		return this.fileTable;
 	}
-	parseBifArchives(fd) {
+	parseBifArchives(fd: number) {
 		this.fileTable = [];
 		for (let i = 0; i < this.number_of_bif_files; i++) {
 			const buffer = Buffer.alloc(12);
@@ -99,7 +98,7 @@ export class Chitin {
 		this.parseTableOfKeys(fd);
 	}
 
-	parseTableOfKeys(fd) {
+	parseTableOfKeys(fd: number) {
 		for (let i = 0; i < this.number_of_entries_in_chitin_key; i++) {
 			const buffer = Buffer.alloc(22);
 			fs.readSync(

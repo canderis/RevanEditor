@@ -12,12 +12,12 @@ export class Bif {
 
 	bifFiles: BifArchive[];
 
-	constructor(directory, game: 'KOTOR' | 'TSL') {
+	constructor(directory: string, game: 'KOTOR' | 'TSL') {
 
 		this.directory = directory;
 		this.game = game;
 
-		const fd = fs.openSync(directory + '/chitin.key', 'r');
+		const fd = fs.openSync(`${directory}/chitin.key`, 'r');
 
 		this.chitin = new Chitin(this.directory, fd);
 

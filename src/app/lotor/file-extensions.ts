@@ -1,4 +1,8 @@
-export const FileExtensions = {
+interface Extensions {
+    [key: string]: string
+}
+
+export const FileExtensions: Extensions = {
 	'1': 'bmp',
 	'3': 'tga',
 	'0': 'res',

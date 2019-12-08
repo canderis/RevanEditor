@@ -5,7 +5,7 @@ import {
 } from '@angular/material/tree';
 import { of as observableOf } from 'rxjs';
 import { FlatTreeControl } from '@angular/cdk/tree';
-import { LotorService } from '../../lotor/lotor.service';
+import { LotorService, KotorFileNode } from '../../lotor/lotor.service';
 import { PreferenceService } from '../../shared/services/preference.service';
 import { Game } from '../../lotor/game';
 import { TPCLoader } from '../../lotor/file-types/tpc';
@@ -41,10 +41,10 @@ export class FileBrowserComponent {
 	treeControl: FlatTreeControl<FlatTreeNode>;
 
 	/** The TreeFlattener is used to generate the flat list of items from hierarchical data. */
-	treeFlattener: MatTreeFlattener<FileNode, FlatTreeNode>;
+	treeFlattener: MatTreeFlattener<KotorFileNode, FlatTreeNode>;
 
 	/** The MatTreeFlatDataSource connects the control and flattener to provide data. */
-	dataSource: MatTreeFlatDataSource<FileNode, FlatTreeNode>;
+	dataSource: MatTreeFlatDataSource<KotorFileNode, FlatTreeNode>;
 
 	selectedFile: FlatTreeNode = null;
 
@@ -65,7 +65,7 @@ export class FileBrowserComponent {
 			this.treeFlattener
 		);
 
-		const games = [];
+		const games: KotorFileNode[] = [];
 
 		preferenceService.getPreferences().subscribe(pref => {
 			pref.directories.forEach(directory => {
@@ -80,18 +80,18 @@ export class FileBrowserComponent {
 	}
 
 	/** Transform the data to something the tree can read. */
-	transformer(node: any, level: number) {
+	transformer(node: KotorFileNode, level: number) {
 		return {
 			name: node.fileName,
 			type: node.files ? 'folder' : 'file',
-			level: level,
+			level,
 			expandable: node.files,
 			file: node
 		};
 	}
 
 	/** Get the level of the node */
-	getLevel(node: FlatTreeNode) {
+	getLevel(node: any) {
 		return node.level;
 	}
 
@@ -110,7 +110,7 @@ export class FileBrowserComponent {
 		return observableOf(node.files);
 	}
 
-	clicked(node) {
+	clicked(node: FlatTreeNode) {
 		console.log(node);
 	}
 
@@ -134,7 +134,7 @@ export class FileBrowserComponent {
 			console.log(buffer);
 			const f = tpcLoader.load(buffer, (texture) => {
 				console.log(texture);
-				writeTGA(texture, fileNames.filePath, { pixel_size: texture.pixelDepth });
+				writeTGA(texture.image, fileNames.filePath, { pixel_size: texture.pixelDepth });
 			}, (error) => {
 				console.log(error);
 			});

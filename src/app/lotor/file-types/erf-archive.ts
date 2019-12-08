@@ -38,7 +38,7 @@ export class ErfArchive extends Archive {
 	fd: number;
 	files: ErfFile[];
 
-	constructor(public fileName, private archivePath: string, private game: 'KOTOR' | 'TSL') {
+	constructor(public fileName: string, private archivePath: string, private game: 'KOTOR' | 'TSL') {
 		super();
 
 		this.readHeader();
@@ -145,16 +145,19 @@ export class ErfArchive extends Archive {
 		for (let i = 0; i < this.header.entry_count; i++) {
 			const keypos = i * ErfArchive.sizes.key;
 
+			const fileName = buffer.toString('utf-8', keypos, keypos + 16).replace(/\0+$/, '');
+			const res_id = buffer.readUInt32LE(keypos + 16);
+
 			const key: ErfKey = {
-				fileName: buffer.toString('utf-8', keypos, keypos + 16).replace(/\0+$/, ''),
-				res_id: buffer.readUInt32LE(keypos + 16),
-				fileExtension: FileExtensions[buffer.readUInt16LE(keypos + 20)]
+				fileName,
+				res_id,
+				fileExtension: FileExtensions[`${buffer.readUInt16LE(keypos + 20)}`]
 			};
 
 			const respos = this.header.entry_count * ErfArchive.sizes.key + (i * ErfArchive.sizes.resource);
 
 			const res = new ErfFile(
-				key.fileName + '.' + key.fileExtension,
+				`${key.fileName}.${key.fileExtension}`,
 				key.fileExtension,
 				buffer.readUInt32LE(respos),
 				buffer.readUInt32LE(respos + 4),

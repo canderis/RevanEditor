@@ -5,6 +5,11 @@ import { BifFile } from './file-types/bif-file';
 import { ErfArchive } from './file-types/erf-archive';
 import { Archive, KotorFile } from './file-types/archive';
 
+export interface KotorFileNode {
+	fileName: string;
+	files: KotorFile[] | KotorFileNode[];
+}
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -21,7 +26,7 @@ export class LotorService {
 
 	}
 
-	getTree(game: Game) {
+	getTree(game: Game): KotorFileNode {
 		console.log(this);
 		return {
 			fileName: game.game,
@@ -42,9 +47,9 @@ export class LotorService {
 		return files.map(archive => {
 			if (archive.files.length > 100) {
 				return { ...archive, files: this.formatByExt(archive.files) };
-			} else {
-				return archive;
 			}
+
+			return archive;
 		});
 	}
 	formatByExt(files: KotorFile[] ) {
@@ -56,7 +61,7 @@ export class LotorService {
 			sorted.get(file.fileExtension).push(file);
 		});
 
-		const out = [];
+		const out: KotorFileNode[] = [];
 		sorted.forEach((sortedFiles, key) => {
 			if (sortedFiles.length > 100) {
 				out.push({
@@ -83,7 +88,7 @@ export class LotorService {
 			sorted.get(file.fileName.charAt(0)).push(file);
 		});
 
-		const out = [];
+		const out: KotorFileNode[] = [];
 		sorted.forEach((sortedFiles, key) => {
 			out.push({
 				fileName: key,

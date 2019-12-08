@@ -1,6 +1,8 @@
 import { Bif, } from './bif';
 import { Erf } from './erf';
 
+import * as fs from 'fs';
+
 export class Game {
 	bif: Bif;
 	erf: Erf;
@@ -9,8 +11,6 @@ export class Game {
 
 	constructor(dir: string) {
 		const directory = dir;
-
-		const fs = require('fs');
 
 		if (!fs.existsSync(directory)) {
 			console.log('directory does not exist');

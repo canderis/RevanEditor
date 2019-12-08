@@ -1,3 +1,6 @@
+export interface FileNode {
+	fileName: string;
+}
 export interface KotorFile {
 	fileName: string;
 	fileExtension: string;

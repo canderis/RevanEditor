@@ -10,7 +10,7 @@ export class Erf {
 
 	erfFiles: ErfArchive[];
 
-	constructor(directory, game: 'KOTOR' | 'TSL') {
+	constructor(directory: string, game: 'KOTOR' | 'TSL') {
 		this.directory = directory;
 		this.game = game;
 
