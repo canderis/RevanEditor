@@ -1,4 +1,24 @@
+:host {
+	display: grid;
+	height: 100%;
+	width: 100%;
+}
 .type-icon {
   color: #757575;
   margin-right: 5px;
+}
+
+.tree {
+	height: 100%;
+	position: relative;
+	overflow: scroll;
+}
+
+.browse-area {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	position: relative;
+	overflow: hidden;
+	height: 100%;
+	width: 100%;
 }

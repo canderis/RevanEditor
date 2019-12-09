@@ -1,16 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild, ElementRef } from "@angular/core";
 import {
 	MatTreeFlatDataSource,
 	MatTreeFlattener
-} from '@angular/material/tree';
-import { of as observableOf } from 'rxjs';
-import { FlatTreeControl } from '@angular/cdk/tree';
-import { LotorService, KotorFileNode } from '../../lotor/lotor.service';
-import { PreferenceService } from '../../shared/services/preference.service';
-import { Game } from '../../lotor/game';
-import { TPCLoader } from '../../lotor/file-types/tpc';
-import { KotorFile } from '../../lotor/file-types/archive';
-import { writeTGA } from '../../lotor/file-types/tga';
+} from "@angular/material/tree";
+import { of as observableOf } from "rxjs";
+import { FlatTreeControl } from "@angular/cdk/tree";
+import { LotorService, KotorFileNode } from "../../lotor/lotor.service";
+import { PreferenceService } from "../../shared/services/preference.service";
+import { Game } from "../../lotor/game";
+import { TPCLoader } from "../../lotor/file-types/tpc";
+import { KotorFile } from "../../lotor/file-types/archive";
+import { writeTGA } from "../../lotor/file-types/tga";
 
 /** File node data with possible child nodes. */
 export interface FileNode {
@@ -32,9 +32,9 @@ export interface FlatTreeNode {
 }
 
 @Component({
-	selector: 'file-browser',
-	templateUrl: './file-browser.component.html',
-	styleUrls: ['./file-browser.component.scss']
+	selector: "file-browser",
+	templateUrl: "./file-browser.component.html",
+	styleUrls: ["./file-browser.component.scss"]
 })
 export class FileBrowserComponent {
 	/** The TreeControl controls the expand/collapse state of tree nodes.  */
@@ -48,7 +48,14 @@ export class FileBrowserComponent {
 
 	selectedFile: FlatTreeNode = null;
 
-	constructor(private lotorService: LotorService, private preferenceService: PreferenceService) {
+	img: HTMLCanvasElement;
+
+	@ViewChild("previewArea", { static: false }) previewArea: ElementRef;
+
+	constructor(
+		private lotorService: LotorService,
+		private preferenceService: PreferenceService
+	) {
 		this.treeFlattener = new MatTreeFlattener(
 			this.transformer,
 			this.getLevel,
@@ -75,15 +82,13 @@ export class FileBrowserComponent {
 			});
 			this.dataSource.data = games;
 		});
-
-
 	}
 
 	/** Transform the data to something the tree can read. */
 	transformer(node: KotorFileNode, level: number) {
 		return {
 			name: node.fileName,
-			type: node.files ? 'folder' : 'file',
+			type: node.files ? "folder" : "file",
 			level,
 			expandable: node.files,
 			file: node
@@ -111,17 +116,49 @@ export class FileBrowserComponent {
 	}
 
 	clicked(node: FlatTreeNode) {
-		console.log(node);
+		console.log("node", node);
 	}
 
-	async extract()  {
+	select(node: FlatTreeNode) {
+		this.selectedFile = node;
+
+		const buffer = this.selectedFile.file.extract();
+		if (this.selectedFile.file.fileExtension === "tpc") {
+			const tpcLoader = new TPCLoader();
+			console.log(buffer);
+			const f = tpcLoader.load(
+				buffer,
+				texture => {
+					console.log(texture, this.previewArea, this.img);
+					if (this.img) {
+						this.previewArea.nativeElement.removeChild(this.img);
+					}
+
+					this.previewArea.nativeElement.appendChild(texture.image);
+
+					this.img = texture.image;
+
+					// writeTGA(texture.image, fileNames.filePath, { pixel_size: texture.pixelDepth });
+				},
+				error => {
+					console.log(error);
+				}
+			);
+			console.log(f);
+		}
+		console.log("select", node);
+	}
+
+	async extract() {
 		console.log(this.selectedFile);
 
-		const remote = require('electron').remote;
+		const remote = require("electron").remote;
 		const dialog = remote.dialog;
-		const fs = require('fs');
+		const fs = require("fs");
 
-		const fileNames = await dialog.showSaveDialog({defaultPath: this.selectedFile.name});
+		const fileNames = await dialog.showSaveDialog({
+			defaultPath: this.selectedFile.name
+		});
 
 		if (!fileNames) {
 			return false;
@@ -129,22 +166,24 @@ export class FileBrowserComponent {
 
 		const buffer = this.selectedFile.file.extract();
 
-		if (this.selectedFile.file.fileExtension === 'tpc') {
+		if (this.selectedFile.file.fileExtension === "tpc") {
 			const tpcLoader = new TPCLoader();
 			console.log(buffer);
-			const f = tpcLoader.load(buffer, (texture) => {
-				console.log(texture);
-				writeTGA(texture.image, fileNames.filePath, { pixel_size: texture.pixelDepth });
-			}, (error) => {
-				console.log(error);
-			});
+			const f = tpcLoader.load(
+				buffer,
+				texture => {
+					console.log(texture);
+					writeTGA(texture.image, fileNames.filePath, {
+						pixel_size: texture.pixelDepth
+					});
+				},
+				error => {
+					console.log(error);
+				}
+			);
 			console.log(f);
-
-		}
-		else {
+		} else {
 			fs.writeFileSync(fileNames.filePath, buffer);
 		}
-
-
 	}
 }

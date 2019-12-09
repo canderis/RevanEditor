@@ -490,7 +490,7 @@ export class TPCLoader {
 						break;
 					default:
 						console.error(
-							'THREE.TPCLoader.parse.getTpcRGBA: not support this format'
+							'THREE.TPCLoader.parse.getTpcRGBA: not support this format',
 						);
 						break;
 				}
