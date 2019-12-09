@@ -1,5 +1,5 @@
 <as-split>
-	<as-split-area>
+	<as-split-area [order]="0" [size]="'*'">
 		<div class="browse-area">
 			<div class="tree">
 				<mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
@@ -59,11 +59,22 @@
 				</mat-tree>
 			</div>
 			<div class="preview">
-				<button (click)="extract()">Extract</button>
+				<button mat-raised-button (click)="extract()">Extract</button>
 			</div>
 		</div>
 	</as-split-area>
-	<as-split-area [visible]="selectedFile && selectedFile.file.fileExtension === 'tpc'">
-		<div #previewArea></div>
+	<as-split-area [order]="1" [visible]="selectedFile?.file?.fileExtension === 'tpc'">
+		<div #previewArea>
+
+		</div>
+		<div class="txi-area" *ngIf="img?.extensionString">
+			<h3 class="mat-h3">TXI:</h3>
+			<mat-form-field>
+				<textarea mat-autosize matInput class="mat" [value]="img.extensionString"></textarea>
+			</mat-form-field>
+		</div>
+		<div class="txi-area">
+			<button mat-raised-button (click)="extractTga()">Extract as TGA</button>
+		</div>
 	</as-split-area>
 </as-split>

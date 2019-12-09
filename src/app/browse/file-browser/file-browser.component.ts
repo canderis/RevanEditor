@@ -8,7 +8,7 @@ import { FlatTreeControl } from "@angular/cdk/tree";
 import { LotorService, KotorFileNode } from "../../lotor/lotor.service";
 import { PreferenceService } from "../../shared/services/preference.service";
 import { Game } from "../../lotor/game";
-import { TPCLoader } from "../../lotor/file-types/tpc";
+import { TPCLoader, TPCTexture } from "../../lotor/file-types/tpc";
 import { KotorFile } from "../../lotor/file-types/archive";
 import { writeTGA } from "../../lotor/file-types/tga";
 
@@ -48,7 +48,7 @@ export class FileBrowserComponent {
 
 	selectedFile: FlatTreeNode = null;
 
-	img: HTMLCanvasElement;
+	img: TPCTexture = null;
 
 	@ViewChild("previewArea", { static: false }) previewArea: ElementRef;
 
@@ -131,12 +131,12 @@ export class FileBrowserComponent {
 				texture => {
 					console.log(texture, this.previewArea, this.img);
 					if (this.img) {
-						this.previewArea.nativeElement.removeChild(this.img);
+						this.previewArea.nativeElement.removeChild(this.img.image);
 					}
 
 					this.previewArea.nativeElement.appendChild(texture.image);
 
-					this.img = texture.image;
+					this.img = texture;
 
 					// writeTGA(texture.image, fileNames.filePath, { pixel_size: texture.pixelDepth });
 				},
@@ -147,6 +147,25 @@ export class FileBrowserComponent {
 			console.log(f);
 		}
 		console.log("select", node);
+	}
+
+	async extractTga() {
+
+		const remote = require("electron").remote;
+		const dialog = remote.dialog;
+		const fs = require("fs");
+
+		const fileNames = await dialog.showSaveDialog({
+			defaultPath: `${this.selectedFile.name.substr(0, this.selectedFile.name.length - 3)}tga`
+		});
+
+		if (!fileNames) {
+			return false;
+		}
+
+		writeTGA(this.img.image, fileNames.filePath, {
+			pixel_size: this.img.pixelDepth
+		});
 	}
 
 	async extract() {
@@ -166,24 +185,24 @@ export class FileBrowserComponent {
 
 		const buffer = this.selectedFile.file.extract();
 
-		if (this.selectedFile.file.fileExtension === "tpc") {
-			const tpcLoader = new TPCLoader();
-			console.log(buffer);
-			const f = tpcLoader.load(
-				buffer,
-				texture => {
-					console.log(texture);
-					writeTGA(texture.image, fileNames.filePath, {
-						pixel_size: texture.pixelDepth
-					});
-				},
-				error => {
-					console.log(error);
-				}
-			);
-			console.log(f);
-		} else {
+		// if (this.selectedFile.file.fileExtension === "tpc" && this.img) {
+		// 	// const tpcLoader = new TPCLoader();
+		// 	// console.log(buffer);
+		// 	// const f = tpcLoader.load(
+		// 	// 	buffer,
+		// 	// 	texture => {
+		// 	// 		console.log(texture);
+		// 			writeTGA(this.img.image, fileNames.filePath, {
+		// 				pixel_size: this.img.pixelDepth
+		// 			});
+		// 	// 	},
+		// 	// 	error => {
+		// 	// 		console.log(error);
+		// 	// 	}
+		// 	// );
+		// 	// console.log(f);
+		// } else {
 			fs.writeFileSync(fileNames.filePath, buffer);
-		}
+		// }
 	}
 }
