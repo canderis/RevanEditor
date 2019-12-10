@@ -1,6 +1,7 @@
 /*
  * @author ndixUR / https://github.com/ndixUR/
  * @author mrdoob / http://mrdoob.com/
+ * @author canderis / https://shuffman.com/
  */
 
 import * as THREE from 'three';

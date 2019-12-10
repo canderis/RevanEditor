@@ -82,10 +82,10 @@ export class LotorService {
 	formatByAlphabet(files: KotorFile[]) {
 		const sorted = new Map<string, KotorFile[]>();
 		files.forEach(file => {
-			if ( !sorted.has(file.fileName.charAt(0)) ) {
-				sorted.set(file.fileName.charAt(0), []);
+			if ( !sorted.has(file.fileName.charAt(0).toLowerCase()) ) {
+				sorted.set(file.fileName.charAt(0).toLowerCase(), []);
 			}
-			sorted.get(file.fileName.charAt(0)).push(file);
+			sorted.get(file.fileName.charAt(0).toLowerCase()).push(file);
 		});
 
 		const out: KotorFileNode[] = [];
