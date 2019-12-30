@@ -1,0 +1,80 @@
+<as-split>
+	<as-split-area [order]="0" [size]="'*'">
+		<div class="browse-area">
+			<div class="tree">
+				<mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+					<mat-tree-node
+						*matTreeNodeDef="let node"
+						matTreeNodeToggle
+						matTreeNodePadding
+					>
+						<button
+							mat-icon-button
+							(click)="select(node)"
+						>
+							<mat-icon
+								class="type-icon"
+								[attr.aria-label]="node.type + 'icon'"
+							>
+								{{
+									node.type === "folder"
+										? "folder"
+										: "description"
+								}}
+							</mat-icon>
+							{{ node.name }}
+						</button>
+					</mat-tree-node>
+
+					<mat-tree-node
+						*matTreeNodeDef="let node; when: hasChild"
+						matTreeNodePadding
+					>
+						<button
+							mat-icon-button
+							matTreeNodeToggle
+							(click)="clicked(node)"
+							[attr.aria-label]="'toggle ' + node.name"
+						>
+							<mat-icon class="mat-icon-rtl-mirror">
+								{{
+									treeControl.isExpanded(node)
+										? "expand_more"
+										: "chevron_right"
+								}}
+							</mat-icon>
+							<mat-icon
+								class="type-icon"
+								[attr.aria-label]="node.type + 'icon'"
+							>
+								{{
+									node.type === "folder"
+										? "folder"
+										: "description"
+								}}
+							</mat-icon>
+							{{ node.name }}
+						</button>
+					</mat-tree-node>
+				</mat-tree>
+			</div>
+			<div class="preview">
+				<button mat-raised-button (click)="extract()">Extract</button>
+			</div>
+		</div>
+	</as-split-area>
+	<as-split-area [order]="1" [visible]="selectedFile?.file?.fileExtension === 'tpc'">
+		<div #previewArea>
+
+		</div>
+		<div class="txi-area" *ngIf="img?.extensionString">
+			<h3 class="mat-h3">TXI:</h3>
+			<mat-form-field>
+				<textarea mat-autosize matInput class="mat" [value]="img.extensionString"></textarea>
+			</mat-form-field>
+		</div>
+		<div class="txi-area">
+			<button mat-raised-button (click)="extractTga()">Extract as TGA</button>
+		</div>
+	</as-split-area>
+</as-split>

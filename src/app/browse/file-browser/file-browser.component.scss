@@ -1,0 +1,46 @@
+:host {
+	display: grid;
+	height: calc(100% - 64px);
+	width: 100%;
+}
+.type-icon {
+  color: #757575;
+  margin-right: 5px;
+}
+
+.tree {
+	height: 100%;
+	position: relative;
+	overflow: scroll;
+}
+
+.browse-area {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	position: relative;
+	overflow: hidden;
+	height: 100%;
+	width: 100%;
+}
+
+
+textarea {
+	width: 100%;
+}
+
+
+.txi-area {
+	padding: 32px;
+}
+
+mat-form-field {
+	width: 100%;
+}
+
+
+.preview {
+	margin: auto;
+
+	padding: 32px;
+
+}

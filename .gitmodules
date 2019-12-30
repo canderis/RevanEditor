@@ -1,0 +1,3 @@
+[submodule "src/lotor"]
+	path = src/lotor
+	url = https://github.com/canderis/lotor
