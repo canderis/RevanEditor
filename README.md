@@ -1,29 +1,25 @@
-# revan-editor
+# Revan Editor
+
+Revan Editor is a full modding tool for the Star Wars: Knights of the Old Republic video games.
 
 ## Project setup
-```
+
+Clone the repository and run
+
+```bash
 npm install
 ```
 
-### Compiles and hot-reloads for development
-```
+To run the code in development mode use
+
+```bash
 npm run serve
 ```
 
-### Compiles and minifies for production
-```
+To build the code for production use
+
+```bash
 npm run build
 ```
 
-### Run your tests
-```
-npm run test
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+The compiled code will be in the release folder for your given OS
