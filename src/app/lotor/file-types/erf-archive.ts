@@ -38,7 +38,7 @@ export class ErfArchive extends Archive {
 	fd: number;
 	files: ErfFile[];
 
-	constructor(public fileName: string, private archivePath: string, private game: 'KOTOR' | 'TSL') {
+	constructor(public fileName: string, public archivePath: string, private game: 'KOTOR' | 'TSL') {
 		super();
 
 		this.readHeader();

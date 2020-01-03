@@ -32,7 +32,7 @@ export class RimArchive extends Archive {
 	fd: number;
 	files: RimFile[];
 
-	constructor(public fileName: string, private archivePath: string, private game: 'KOTOR' | 'TSL') {
+	constructor(public fileName: string, public archivePath: string, private game: 'KOTOR' | 'TSL') {
 		super();
 
 		this.readHeader();

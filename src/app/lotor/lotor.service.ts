@@ -30,16 +30,7 @@ export class LotorService {
 		console.log(this);
 		return {
 			fileName: game.game,
-			files: [
-				{
-					fileName: 'Bifs',
-					files: this.format(game.bif.bifFiles)
-				},
-				{
-					fileName: 'Erfs',
-					files: this.format(game.erf.erfFiles)
-				}
-			]
+			files: this.format(game.files)
 		};
 	}
 
