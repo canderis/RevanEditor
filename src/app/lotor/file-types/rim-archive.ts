@@ -14,14 +14,14 @@ interface RimHeader {
 }
 interface RimKey {
 	fileName: string;
-	res_id: number;
+	// res_id: number;
 	fileExtension: string;
 }
 
 export class RimArchive extends Archive {
 	static sizes = {
 		header: 44,
-		key: 24,
+		key: 32,
 		resource: 8,
 	};
 
@@ -134,21 +134,21 @@ export class RimArchive extends Archive {
 			const keypos = i * RimArchive.sizes.key;
 
 			const fileName = buffer.toString('utf-8', keypos, keypos + 16).replace(/\0+$/, '');
-			const res_id = buffer.readUInt32LE(keypos + 16);
+			// const res_id = buffer.readUInt32LE(keypos + 20);
 
 			const key: RimKey = {
 				fileName,
-				res_id,
-				fileExtension: FileExtensions[`${buffer.readUInt16LE(keypos + 20)}`]
+				// res_id,
+				fileExtension: FileExtensions[`${buffer.readUInt16LE(keypos + 16)}`]
 			};
 
-			const respos = this.header.entry_count * RimArchive.sizes.key + (i * RimArchive.sizes.resource);
+			// const respos = this.header.entry_count * RimArchive.sizes.key + (i * RimArchive.sizes.resource);
 
 			const res = new RimFile(
 				`${key.fileName}.${key.fileExtension}`,
 				key.fileExtension,
-				buffer.readUInt32LE(respos),
-				buffer.readUInt32LE(respos + 4),
+				buffer.readUInt32LE(keypos + 24),
+				buffer.readUInt32LE(keypos + 28),
 			);
 			res.archive = this;
 
