@@ -1,0 +1,7 @@
+
+<div class="chev" [ngClass]="{expanded: expanded}" (click)="expanded = !expanded">{{ node.fileName }}</div>
+<ul *ngIf="node.files && expanded">
+	<li *ngFor="let file of node?.files">
+		<app-file-browser-sidebar [expanded]="false" [node]="file"></app-file-browser-sidebar>
+	</li>
+</ul>

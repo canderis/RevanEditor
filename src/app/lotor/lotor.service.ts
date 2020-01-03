@@ -16,13 +16,28 @@ export interface KotorFileNode {
 export class LotorService {
 	games: Map<string, Game> = new Map();
 
+	k1: Map<string, Game> = new Map();
+	k2: Map<string, Game> = new Map();
+
+
+
 	constructor() {}
 
 	openDir(dir: string) {
-		if (!this.games.has(dir)) {
-			this.games.set(dir, new Game(dir));
+		let g = this.k1.get(dir) || this.k2.get(dir);
+		if (!g) {
+			g = new Game(dir);
+			if (g.game === 'KOTOR') {
+				this.k1.set(dir, g);
+			}
+			else {
+				this.k2.set(dir, g);
+			}
+			// this.games.set(dir, new Game(dir));
 		}
-		return this.games.get(dir);
+
+		console.log(g);
+		return g;
 
 	}
 

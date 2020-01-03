@@ -1,3 +1,6 @@
+* {
+	font-family: 'Roboto', sans-serif;
+}
 /* You can add global styles to this file, and also import other style files */
 html, body {
   margin: 0;
@@ -10,4 +13,27 @@ html, body {
 
 .d-none {
 	display: none;
+}
+
+
+i.k1-icon {
+	display: inline-block;
+    background-image: url('assets/k1-icon.svg');
+	background-repeat: no-repeat;
+
+	height: 32px;
+	width: 16px;
+}
+i.k2-icon {
+	display: inline-block;
+    background-image: url('assets/k2-icon.svg');
+	background-repeat: no-repeat;
+	height: 32px;
+	width: 32px;
+}
+
+.btn {
+	background: none;
+    border: none;
+	cursor: pointer;
 }

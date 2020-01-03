@@ -1,0 +1,31 @@
+:host {
+	display: grid;
+	grid-gap: 8px;
+	padding-left: 16px;
+}
+
+div {
+	color: white;
+	font-size: 300;
+}
+
+ul {
+	list-style: none;
+	display: grid;
+	grid-gap: 8px;
+	padding-left: 16px;
+}
+
+.chev {
+	position: relative;
+	&:before {
+		content: '<';
+		transform: translate(-20px, 0px);
+		position: absolute;
+		transition: 0.25s;
+	}
+
+	&.expanded:before {
+		transform: translate(-20px, 0px) rotate(-90deg);
+	}
+}
