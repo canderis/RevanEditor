@@ -7,8 +7,14 @@
 		<as-split-area class="browse-area" *ngIf="sidebarSelected" [order]="0" [size]="250">
 
 				<div class="tree">
+					<div *ngIf="sidebarSelected === 'k1'" class="game-title">
+						Knights Of The Old Republic
+					</div>
+					<div *ngIf="sidebarSelected === 'k2'" class="game-title">
+						The Sith Lords
+					</div>
 					<ul>
-						<app-file-browser-sidebar [expanded]="true" [node]="selectedGame"></app-file-browser-sidebar>
+						<app-file-browser-sidebar [top]="true" [expanded]="true" [node]="selectedGame"></app-file-browser-sidebar>
 					</ul>
 				</div>
 				<!-- <div class="preview">

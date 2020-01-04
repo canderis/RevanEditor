@@ -11,6 +11,7 @@ import { BrowseService } from "../../browse.service";
 export class FileBrowserSidebarComponent implements OnInit {
 	@Input() node: (Archive & KotorFile);
 	@Input() expanded: boolean;
+	@Input() top: boolean = false;
 
 	constructor(public browseService: BrowseService) {}
 

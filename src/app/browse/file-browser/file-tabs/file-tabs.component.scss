@@ -39,6 +39,8 @@ ul {
 		grid-template-columns: 1fr auto;
 		grid-gap: 8px;
 
+		cursor: pointer;
+
 		.close-btn {
 			opacity: 0;
 			color: white;
