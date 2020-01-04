@@ -1,6 +1,5 @@
 import { Injectable } from "@angular/core";
 import { KotorFile } from "../lotor/file-types/archive";
-import { TPCLoader } from "../lotor/file-types/tpc";
 import { KotorFileNode } from "../lotor/lotor.service";
 
 @Injectable({
@@ -14,8 +13,13 @@ export class BrowseService {
 
 	constructor() {}
 
-	selectFile(file: KotorFile & KotorFileNode) {
-		if (!file.files) {
+	isKotorFileNode(object: any): object is KotorFileNode {
+		return 'files' in object;
+	}
+
+
+	selectFile(file: KotorFile | KotorFileNode) {
+		if (!this.isKotorFileNode(file)) {
 			this.selectedFile = file;
 
 			if (!this.openTabs.includes(file)) {
@@ -30,11 +34,15 @@ export class BrowseService {
 		const f = this.openTabs[i];
 
 		this.openTabs.splice(i, 1);
-		this.tabHistory.filter(file => file === f);
+		this.tabHistory = this.tabHistory.filter(file => file !== f);
 
 		if (this.selectedFile === f) {
 			if (this.tabHistory.length > 0) {
-				this.selectedFile = this.tabHistory[0];
+				this.selectFile(this.tabHistory[0]);
+				this.tabHistory.splice(0, 1);
+			}
+			else {
+				this.selectedFile = null;
 			}
 		}
 	}
