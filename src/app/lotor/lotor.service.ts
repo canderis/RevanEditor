@@ -19,13 +19,6 @@ export class LotorService {
 	k1: Map<string, Game> = new Map();
 	k2: Map<string, Game> = new Map();
 
-	selectedFile: KotorFile;
-	selectFile(file: KotorFile & KotorFileNode) {
-		if (!file.files) {
-			this.selectedFile = file;
-		}
-	}
-
 	constructor() {}
 
 	openDir(dir: string) {

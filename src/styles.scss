@@ -1,5 +1,6 @@
 * {
 	font-family: 'Roboto', sans-serif;
+	box-sizing: border-box;
 }
 /* You can add global styles to this file, and also import other style files */
 html, body {
@@ -40,7 +41,11 @@ i.k2-icon {
 
 .as-split-gutter {
 	height: 100vh !important;
-	background-color: #011521 !important;
+	background-color: #011c2b !important;
+
+	.as-split-gutter-icon {
+		display: none;
+	}
 }
 
 .browse-area.as-split-area{

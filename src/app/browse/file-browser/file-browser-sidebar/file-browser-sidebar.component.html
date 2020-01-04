@@ -1,5 +1,5 @@
 
-<div [ngClass]="{chev: node.files?.length > 0, expanded: expanded}" (click)="expanded = !expanded; lotorService.selectFile(node)">{{ node.fileName }}</div>
+<div [ngClass]="{chev: node.files?.length > 0, expanded: expanded}" (click)="expanded = !expanded; browseService.selectFile(node)">{{ node.fileName }}</div>
 <ul *ngIf="node.files && expanded">
 	<li *ngFor="let file of node?.files">
 		<app-file-browser-sidebar [expanded]="false" [node]="file"></app-file-browser-sidebar>

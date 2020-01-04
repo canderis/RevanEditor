@@ -3,6 +3,7 @@ import { KotorFileNode, LotorService } from "../../../lotor/lotor.service";
 import { KotorFile } from "../../../lotor/file-types/archive";
 import { TPCLoader, TPCTexture } from "../../../lotor/file-types/tpc";
 import { writeTGA } from "../../../lotor/file-types/tga";
+import { BrowseService } from "../../browse.service";
 
 @Component({
 	selector: "app-file-tabs",
@@ -14,7 +15,7 @@ export class FileTabsComponent implements OnInit {
 	selectedFile: KotorFile;
 	img: TPCTexture = null;
 
-	constructor(public lotorService: LotorService) {}
+	constructor(public browseService: BrowseService) {}
 
 	ngOnInit() {}
 

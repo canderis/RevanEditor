@@ -1,3 +1,10 @@
-<div>
-	<app-tpc-editor [file]="lotorService.selectedFile" *ngIf="lotorService.selectedFile?.fileExtension === 'tpc'"></app-tpc-editor>
+<div *ngIf="browseService.openTabs.length > 0" class="tab-bar">
+	<ul>
+		<li [ngClass]="{selected: browseService.selectedFile === tab }" *ngFor="let tab of browseService.openTabs"> {{ tab.fileName }} </li>
+	</ul>
+</div>
+
+<div *ngIf="browseService.openTabs.length > 0" [ngSwitch]="browseService.selectedFile?.fileExtension">
+	<app-tpc-editor [file]="browseService.selectedFile" *ngSwitchCase="'tpc'"></app-tpc-editor>
+	<app-no-editor *ngSwitchDefault></app-no-editor>
 </div>
