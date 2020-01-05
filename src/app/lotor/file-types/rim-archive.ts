@@ -25,6 +25,8 @@ export class RimArchive extends Archive {
 		resource: 8,
 	};
 
+	// fileExtension = 'rim';
+
 	fileExtension = 'rim';
 
 	header: RimHeader;
@@ -82,6 +84,8 @@ export class RimArchive extends Archive {
 			offset_to_resource_list: buffer.readUInt32LE(16),
 			offset_to_key_list: 120
 		};
+
+		this.fileExtension = this.header.type;
 
 		this.close(opened);
 	}

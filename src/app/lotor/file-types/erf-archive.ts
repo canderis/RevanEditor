@@ -95,6 +95,7 @@ export class ErfArchive extends Archive {
 			description_str_ref: buffer.readUInt32LE(40),
 		};
 
+		this.fileExtension = this.header.type;
 		this.close(opened);
 	}
 	readStrings() {
