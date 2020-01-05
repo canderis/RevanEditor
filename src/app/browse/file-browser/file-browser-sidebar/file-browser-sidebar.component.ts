@@ -1,6 +1,5 @@
 import { Component, OnInit, Input } from "@angular/core";
-import { FileNode, KotorFile, Archive } from "../../../lotor/file-types/archive";
-import { LotorService } from "../../../lotor/lotor.service";
+import { KotorFile, Archive } from "../../../lotor/file-types/archive";
 import { BrowseService } from "../../browse.service";
 
 @Component({

@@ -10,8 +10,11 @@
 
 .tab-bar {
 	background-color: #011c2b;
-	width: 100%;
+	width: calc(100% + 11px);
 	overflow: scroll;
+
+	position: relative;
+    left: -11px;
 }
 
 div {
@@ -60,4 +63,19 @@ ul {
 	.selected {
 		background-color: #02253A;
 	}
+}
+
+
+.blank-tab-panel {
+	display: grid;
+	height: 100%;
+
+	img {
+		display: block;
+		margin: auto;
+	}
+}
+
+.tab-area {
+	overflow: hidden;
 }

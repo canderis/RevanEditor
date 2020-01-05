@@ -1,14 +1,6 @@
-import { Component, ViewChild, ElementRef } from "@angular/core";
-
-import { of as observableOf } from "rxjs";
-import { FlatTreeControl } from "@angular/cdk/tree";
+import { Component } from "@angular/core";
 import { LotorService, KotorFileNode } from "../../lotor/lotor.service";
 import { PreferenceService } from "../../shared/services/preference.service";
-import { Game } from "../../lotor/game";
-import { TPCLoader, TPCTexture } from "../../lotor/file-types/tpc";
-import { KotorFile } from "../../lotor/file-types/archive";
-import { writeTGA } from "../../lotor/file-types/tga";
-
 
 @Component({
 	selector: "file-browser",
@@ -43,6 +35,7 @@ export class FileBrowserComponent {
 		}
 
 		this.selectedGame = this.game[0];
+		console.log(this.selectedGame);
 	}
 
 	selectView(v: string) {

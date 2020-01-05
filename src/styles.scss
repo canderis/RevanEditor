@@ -44,7 +44,13 @@ i.k2-icon {
 	background-color: #02253A !important;
 
 	.as-split-gutter-icon {
-		display: none;
+		background: #011c2b;
+		height: 48px !important;
+		top: 0;
+		margin: 0;
+		position: absolute;
+		width: 11px !important;
+		background-image: unset !important;
 	}
 }
 
