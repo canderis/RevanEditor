@@ -7,6 +7,7 @@ import { ErfArchive } from "./file-types/erf-archive";
 import { RimArchive } from "./file-types/rim-archive";
 import { Archive, KotorFile } from "./file-types/archive";
 import { KotorFileNode } from "./lotor.service";
+import { Chitin } from "./file-types/chitin-key-file";
 
 const FILE_TYPES: { [key: string]: any } = {
 	// 'bif': Bif,
@@ -22,6 +23,7 @@ export class Game {
 	files: (KotorFile | Archive)[];
 
 	game: "KOTOR" | "TSL";
+	chitin: Chitin;
 
 	constructor(dir: string) {
 		const directory = dir;
@@ -52,17 +54,20 @@ export class Game {
 			this.game = "KOTOR";
 		}
 
+		const fd = fs.openSync(`${directory}/chitin.key`, 'r');
+		this.chitin = new Chitin(directory, fd);
+
+		const bifFiles = this.chitin.getBifArchives(fd);
+
+		fs.closeSync(fd);
 		// console.log(fList);
 
-		this.files = this.buildTree(directory);
-
-		console.log(this.files);
-
-		// this.bif = new Bif(directory, this.game);
-		// this.erf = new Erf(directory, this.game);
-		// this.rim = new Rim(directory, this.game);
-
-		// this.erf = new erf(directory, fs);
+		this.files = this.buildTree(directory).filter(f => f.fileName !== 'data');
+		this.files.unshift({
+			fileName: 'data',
+			files: bifFiles as Archive[],
+			archivePath: path.join(directory, 'data'),
+		} as Archive);
 	}
 
 	buildTree(directory: string): (KotorFile | Archive)[] {
