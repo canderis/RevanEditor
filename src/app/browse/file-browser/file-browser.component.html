@@ -14,7 +14,7 @@
 						The Sith Lords
 					</div>
 					<ul>
-						<app-file-browser-sidebar [top]="true" [expanded]="true" [node]="selectedGame"></app-file-browser-sidebar>
+						<app-file-browser-sidebar *ngIf="selectedGame" [top]="true" [expanded]="true" [node]="selectedGame"></app-file-browser-sidebar>
 					</ul>
 				</div>
 				<!-- <div class="preview">

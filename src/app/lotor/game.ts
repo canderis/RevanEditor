@@ -97,7 +97,8 @@ export class Game {
 				return {
 					archivePath,
 					fileName: p,
-					fileExtension
+					fileExtension,
+					extract: () => fs.readFileSync(archivePath, {encoding: 'utf-8'})
 				};
 			})
 			// .filter(p => fs.lstatSync(p.archivePath).isDirectory())
