@@ -15,6 +15,7 @@
 	<app-text-editor [file]="browseService.selectedFile" *ngSwitchCase="'txi'"></app-text-editor>
 	<app-text-editor [file]="browseService.selectedFile" *ngSwitchCase="'ini'"></app-text-editor>
 	<app-text-editor [file]="browseService.selectedFile" *ngSwitchCase="'nss'"></app-text-editor>
+	<app-twoda-editor [file]="browseService.selectedFile" *ngSwitchCase="'2da'"></app-twoda-editor>
 	<app-no-editor *ngSwitchDefault></app-no-editor>
 </div>
 <!-- <div *ngIf="browseService.openTabs.length === 0"></div> -->

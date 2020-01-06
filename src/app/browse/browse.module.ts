@@ -9,9 +9,10 @@ import { FileTabsComponent } from './file-browser/file-tabs/file-tabs.component'
 import { TpcEditorComponent } from './file-browser/file-tabs/editors/tpc-editor/tpc-editor.component';
 import { NoEditorComponent } from './file-browser/file-tabs/editors/no-editor/no-editor.component';
 import { TextEditorComponent } from './file-browser/file-tabs/editors/text-editor/text-editor.component';
+import { TwodaEditorComponent } from './file-browser/file-tabs/editors/twoda-editor/twoda-editor.component';
 
 @NgModule({
-	declarations: [FileBrowserComponent, FileBrowserSidebarComponent, FileTabsComponent, TpcEditorComponent, NoEditorComponent, TextEditorComponent],
+	declarations: [FileBrowserComponent, FileBrowserSidebarComponent, FileTabsComponent, TpcEditorComponent, NoEditorComponent, TextEditorComponent, TwodaEditorComponent],
 	imports: [CommonModule,  SharedModule, BrowseRoutingModule, AngularSplitModule.forRoot()]
 })
 export class BrowseModule {}
