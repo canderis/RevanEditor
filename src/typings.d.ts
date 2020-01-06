@@ -24,3 +24,9 @@ declare module 'decode-dxt'{
 
 
 }
+
+declare module 'jexcel' {
+	function jexcel(el: HTMLElement, data: any): void;
+
+	export = jexcel;
+}
