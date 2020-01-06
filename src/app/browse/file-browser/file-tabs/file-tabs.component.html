@@ -1,0 +1,23 @@
+<div  class="tab-bar">
+	<ul *ngIf="browseService.openTabs.length > 0">
+		<li [ngClass]="{selected: browseService.selectedFile === tab }" *ngFor="let tab of browseService.openTabs; let i = index">
+			<span (click)="browseService.selectFile(tab)" >
+				{{ tab.fileName }}
+			</span>
+			<button (click)="browseService.closeTab(i)" class="btn close-btn">x</button>
+		</li>
+	</ul>
+</div>
+
+<div class="tab-area" *ngIf="browseService.openTabs.length > 0" [ngSwitch]="browseService.selectedFile?.fileExtension">
+	<app-tpc-editor [file]="browseService.selectedFile" *ngSwitchCase="'tpc'"></app-tpc-editor>
+	<app-text-editor [file]="browseService.selectedFile" *ngSwitchCase="'txt'"></app-text-editor>
+	<app-text-editor [file]="browseService.selectedFile" *ngSwitchCase="'txi'"></app-text-editor>
+	<app-text-editor [file]="browseService.selectedFile" *ngSwitchCase="'ini'"></app-text-editor>
+	<app-text-editor [file]="browseService.selectedFile" *ngSwitchCase="'nss'"></app-text-editor>
+	<app-no-editor *ngSwitchDefault></app-no-editor>
+</div>
+<!-- <div *ngIf="browseService.openTabs.length === 0"></div> -->
+<div class="blank-tab-panel" *ngIf="browseService.openTabs.length === 0">
+	<img src="assets/revan-logo.svg">
+</div>

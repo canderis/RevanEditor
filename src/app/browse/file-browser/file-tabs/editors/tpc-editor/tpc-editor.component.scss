@@ -1,0 +1,27 @@
+:host {
+	display: block;
+	height: 100%;
+	overflow: auto;
+}
+
+textarea {
+	width: 100%;
+}
+
+
+.txi-area {
+	padding: 32px;
+}
+
+mat-form-field {
+	width: 100%;
+}
+
+
+.preview {
+	margin: auto;
+	max-width: 100%;
+	max-height: calc(100vh - 48px);
+	padding: 32px;
+
+}

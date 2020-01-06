@@ -1,3 +1,7 @@
+* {
+	font-family: 'Roboto', sans-serif;
+	box-sizing: border-box;
+}
 /* You can add global styles to this file, and also import other style files */
 html, body {
   margin: 0;
@@ -10,4 +14,46 @@ html, body {
 
 .d-none {
 	display: none;
+}
+
+
+i.k1-icon {
+	display: inline-block;
+    background-image: url('assets/k1-icon.svg');
+	background-repeat: no-repeat;
+
+	height: 32px;
+	width: 16px;
+}
+i.k2-icon {
+	display: inline-block;
+    background-image: url('assets/k2-icon.svg');
+	background-repeat: no-repeat;
+	height: 32px;
+	width: 32px;
+}
+
+.btn {
+	background: none;
+    border: none;
+	cursor: pointer;
+}
+
+.as-split-gutter {
+	height: 100vh !important;
+	background-color: #02253A !important;
+
+	.as-split-gutter-icon {
+		background: #011c2b;
+		height: 48px !important;
+		top: 0;
+		margin: 0;
+		position: absolute;
+		width: 11px !important;
+		background-image: unset !important;
+	}
+}
+
+.browse-area.as-split-area{
+	height: 100vh !important;
 }

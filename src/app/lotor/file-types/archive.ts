@@ -8,9 +8,10 @@ export interface KotorFile {
 	archive: Archive;
 }
 export class Archive {
-	files: KotorFile[];
+	files: (KotorFile | Archive)[];
 	fileName: string;
-	fileExtension: string;
+	fileExtension?: string;
+	archivePath: string;
 
 	constructor() {}
 }
