@@ -13,7 +13,7 @@ npm install
 To run the code in development mode use
 
 ```bash
-npm run serve
+npm run dev
 ```
 
 To build the code for production use
