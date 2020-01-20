@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { KotorFile } from "../lotor/file-types/archive";
 import { KotorFileNode } from "../lotor/lotor.service";
+let ipcRenderer = require('electron').ipcRenderer;
 
 @Injectable({
 	providedIn: "root"
@@ -11,7 +12,17 @@ export class BrowseService {
 
 	tabHistory: KotorFile[] = [];
 
-	constructor() {}
+	constructor() {
+		ipcRenderer.on('open', (event, arg) => {
+			console.log('open');
+		});
+		ipcRenderer.on('save', (event, arg) => {
+			console.log('save');
+		});
+		ipcRenderer.on('save-as', (event, arg) => {
+			console.log('save-as');
+        });
+	}
 
 	isKotorFileNode(object: any): object is KotorFileNode {
 		return 'files' in object;

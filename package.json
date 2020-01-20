@@ -1,8 +1,8 @@
 {
   "name": "revan-editor",
+  "productName": "Revan Editor",
   "version": "0.0.0",
   "description": "Modding tool for KOTOR & TSL",
-  "homepage": "https://github.com/canderis/RevanEditor",
   "author": {
     "name": "Scott Huffman"
   },
@@ -27,7 +27,7 @@
     "electron:local": "npm run build:prod && electron .",
     "electron:linux": "npm run build:prod && electron-builder build --linux",
     "electron:windows": "npm run build:prod && electron-builder build --windows",
-    "electron:mac": "npm run build:prod && electron-builder build --mac",
+	"electron:mac": "npm run build:prod && electron-builder build --mac",
     "version": "conventional-changelog -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md",
     "lint": "ng lint"
   },
