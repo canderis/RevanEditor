@@ -9,10 +9,6 @@ const routes: Routes = [
 		pathMatch: 'full'
 	},
 	{
-		path: 'settings',
-		loadChildren: () => import('./settings/settings.module').then(m => m.SettingsModule),
-	},
-	{
 		path: 'browse',
 		loadChildren: () => import('./browse/browse.module').then(m => m.BrowseModule),
 	},

@@ -19,10 +19,9 @@ export class FileBrowserComponent {
 		private lotorService: LotorService,
 		preferenceService: PreferenceService,
 	) {
-		preferenceService.getPreferences().subscribe(pref => {
-			pref.directories.forEach(directory => lotorService.openDir(directory));
-			this.loadGameTree();
-		});
+
+		preferenceService.directories.forEach(directory => lotorService.openDir(directory));
+		this.loadGameTree();
 	}
 
 	loadGameTree() {

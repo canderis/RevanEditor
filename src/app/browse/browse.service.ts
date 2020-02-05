@@ -1,5 +1,5 @@
-import { Injectable } from "@angular/core";
-import { KotorFile } from "../lotor/file-types/archive";
+import { Injectable, ApplicationRef } from "@angular/core";
+import { FileNode } from "../lotor/file-types/archive";
 import { KotorFileNode } from "../lotor/lotor.service";
 let ipcRenderer = require('electron').ipcRenderer;
 
@@ -7,12 +7,17 @@ let ipcRenderer = require('electron').ipcRenderer;
 	providedIn: "root"
 })
 export class BrowseService {
-	selectedFile: KotorFile;
-	openTabs: KotorFile[] = [];
+	selectedFile: FileNode;
+	openTabs: FileNode[] = [];
 
-	tabHistory: KotorFile[] = [];
+	tabHistory: FileNode[] = [];
 
-	constructor() {
+	prefFile: FileNode = {
+		fileName: 'Preferences',
+		fileExtension: 'pref',
+	}
+
+	constructor(private ref: ApplicationRef) {
 		ipcRenderer.on('open', (event, arg) => {
 			console.log('open');
 		});
@@ -21,7 +26,13 @@ export class BrowseService {
 		});
 		ipcRenderer.on('save-as', (event, arg) => {
 			console.log('save-as');
-        });
+		});
+		ipcRenderer.on('nav-prefs', (event, arg) => {
+			console.log('nav-prefs');
+			this.selectFile(this.prefFile);
+			this.ref.tick();
+		});
+
 	}
 
 	isKotorFileNode(object: any): object is KotorFileNode {
@@ -29,7 +40,7 @@ export class BrowseService {
 	}
 
 
-	selectFile(file: KotorFile | KotorFileNode) {
+	selectFile(file: FileNode | KotorFileNode) {
 		if (!this.isKotorFileNode(file)) {
 			this.selectedFile = file;
 

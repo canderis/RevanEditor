@@ -1,7 +1,8 @@
 export interface FileNode {
 	fileName: string;
+	fileExtension: string
 }
-export interface KotorFile {
+export interface KotorFile extends FileNode {
 	fileName: string;
 	fileExtension: string;
 	extract: () => Buffer;

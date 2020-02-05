@@ -39,6 +39,8 @@ export class Game {
 			return row === "chitin.key";
 		});
 
+		console.log(data);
+
 		if (!key) {
 			console.log("invalid directory");
 			return;

@@ -60,6 +60,13 @@ function createWindow() {
 						submenu: [
 							{ role: "about" },
 							{ type: "separator" },
+							{
+								label: "Preverences",
+								click(item: any, focusedWindow: any) {
+									win.webContents.send('nav-prefs');
+								}
+							},
+							{ type: "separator" },
 							{ role: "services" },
 							{ type: "separator" },
 							{ role: "hide" },
