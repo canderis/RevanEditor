@@ -70,8 +70,8 @@
   },
   "dependencies": {
     "@angular/animations": "^9.0.0",
-    "@angular/cdk": "^9.0.0-rc.5",
-    "@angular/material": "^9.0.0-rc.5",
+    "@angular/cdk": "^9.0.0",
+    "@angular/material": "^9.0.0",
     "angular-split": "^3.0.2",
     "decode-dxt": "^1.0.1",
     "jexcel": "^3.7.0",
