@@ -36,7 +36,7 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 			.split(/\s/)
 			.filter(Boolean);
 
-		this.columns = labels.map(label => {
+		this.columns = labels.map((label: string) => {
 			return {
 				type: "text",
 				title: label,

@@ -22,4 +22,6 @@ export abstract class KotorFile implements FileNode {
 	fileExtension: string;
 
 	constructor() {}
+
+	abstract extract: any
 }
