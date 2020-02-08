@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from "@angular/core";
-import { KotorFile } from "../../../../../lotor/file-types/archive";
+import { KotorFile } from "../../../../../lotor/kotor-types";
+
 
 @Component({
 	selector: "app-text-editor",
@@ -11,8 +12,8 @@ export class TextEditorComponent implements OnInit {
 	@Input() set file(file: KotorFile) {
 		this._file = file;
 
-		const buffer = this._file.extract();
-		this.text = buffer.toString();
+		// const buffer = this._file.extract();
+		// this.text = buffer.toString();
 	}
 
 	text: string = "";

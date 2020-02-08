@@ -1,20 +1,31 @@
-import { BifArchive } from './bif-archive';
-import { FileExtensions } from '../file-extensions';
-import { KotorFile } from './archive';
 
-const fs = require('fs');
-export class BifFile implements KotorFile {
+
+import { BifArchive } from "./bif-archive";
+
+import { openSync, readSync } from "original-fs";
+
+import { FileExtensions } from "../file-extensions";
+import { ArchiveNode, KotorFile } from "../kotor-types";
+
+import { kotorFileFactory } from '../file-types/kotor-file';
+
+export class BifArchiveNode implements ArchiveNode {
+	archive: BifArchive;
+	file: KotorFile;
+
+	fileName: string;
+	fileExtension: string;
+
+
 	bifIndex: number;
 	indexOfFileInBif: number;
-	fileExtension: string;
-	fileName: string;
-	archive: BifArchive;
+
 
 	extract() {
-		const fd = fs.openSync(this.archive.directory);
+		const fd = openSync(this.archive.directory, 'r');
 
 		let buffer = Buffer.alloc(20);
-		fs.readSync(fd, buffer, 0, 20, 0);
+		readSync(fd, buffer, 0, 20, 0);
 
 		const bifHeader = {
 			number_of_variable_resources: buffer.readUInt32LE(8),
@@ -23,7 +34,7 @@ export class BifFile implements KotorFile {
 		};
 
 		buffer = Buffer.alloc(16);
-		fs.readSync(
+		readSync(
 			fd,
 			buffer,
 			0,
@@ -39,7 +50,7 @@ export class BifFile implements KotorFile {
 		};
 
 		buffer = Buffer.alloc(variableTable.size_of_raw_data_chunk);
-		fs.readSync(
+		readSync(
 			fd,
 			buffer,
 			0,
@@ -47,7 +58,9 @@ export class BifFile implements KotorFile {
 			variableTable.offset_into_variable_resource_raw_data
 		);
 
-		return buffer;
+		this.file =  kotorFileFactory(this.fileName, this.fileExtension, buffer);
+		return this.file;
+
 	}
 
 	constructor(public resref: string, public file_extension_code: number, public uniqueId: number) {

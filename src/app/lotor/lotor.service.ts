@@ -1,14 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Game } from './game';
-import { BifArchive } from './file-types/bif-archive';
-import { BifFile } from './file-types/bif-file';
-import { ErfArchive } from './file-types/erf-archive';
-import { Archive, KotorFile } from './file-types/archive';
+import { FolderNode, FileNode, isFolderNode, Archive } from './kotor-types';
 
-export interface KotorFileNode {
-	fileName: string;
-	files: (KotorFile | KotorFileNode)[];
-}
 
 @Injectable({
 	providedIn: 'root'
@@ -37,18 +30,19 @@ export class LotorService {
 
 	}
 
-	getTree(game: Game): KotorFileNode {
+	getTree(game: Game): FolderNode {
 		const tree = {
 			fileName: game.game,
-			files: this.formatArchives(game.files.filter(f => f.fileName !== 'chitin.key')).sort(f => f.fileExtension? 1 : -1)
+			files: this.formatArchives(game.files.filter(f => f.fileName !== 'chitin.key')).sort(f => f.fileExtension? 1 : -1),
+			fileExtension: ''
 		};
 
 		return tree;
 	}
 
-	formatArchives(files: (KotorFile | Archive)[]): (KotorFile | Archive)[] {
+	formatArchives(files: FileNode[]): FileNode[] {
 		return this.formatByExtension(files.map(f => {
-			if (this.isKotorArchive(f)) {
+			if (isFolderNode(f)) {
 				f.files = this.formatArchives(f.files);
 			}
 
@@ -56,9 +50,9 @@ export class LotorService {
 		}));
 	}
 
-	formatByExtension(files: (KotorFile | Archive)[]): (KotorFile | Archive)[] {
+	formatByExtension(files: FileNode[]): FileNode[] {
 		if (files.length > 20) {
-			const sorted = new Map<string, (KotorFile | Archive)[]>();
+			const sorted = new Map<string, FileNode[]>();
 
 			const out: Archive[] = [];
 
@@ -98,36 +92,36 @@ export class LotorService {
 		return files;
 	}
 
-	format(files: (KotorFile | Archive)[]) {
+	format(files: FileNode[]) {
 		return files.map(archive => {
-			if (this.isKotorArchive(archive)) {
+			if (isFolderNode(archive)) {
 				return { ...archive, files: this.formatByExt(archive.files) };
 			}
 
 			return archive;
 		});
 	}
-	formatByExt(files: (KotorFile | Archive)[] ) {
-		const out: KotorFileNode[] = [];
+	formatByExt(files: FileNode[] ) {
+		const out: FileNode[] = [];
 
-		const sorted = new Map<string, (KotorFile | Archive)[]>();
+		const sorted = new Map<string, FileNode[]>();
 		files.forEach(file => {
 
-			if (!this.isKotorArchive(file)) {
+			if (isFolderNode(file)) {
 				// const ext = file.fileName.substring( file.fileName.lastIndexOf('.') + 1);
 				// file.fileExtension = ext;
 
+				out.unshift({
+					fileName: file.fileName,
+					files: this.format(file.files),
+					fileExtension: ''
+				} as FolderNode)
+			}
+			else {
 				if ( !sorted.has(file.fileExtension) ) {
 					sorted.set(file.fileExtension, []);
 				}
 				sorted.get(file.fileExtension).push(file);
-			}
-			else {
-				// console.log(file);
-				out.unshift({
-					fileName: file.fileName,
-					files: this.format((file as Archive).files)
-				})
 			}
 		});
 
@@ -135,25 +129,25 @@ export class LotorService {
 			if (sortedFiles.length > 50) {
 				out.push({
 					fileName: key,
-					files: this.formatByAlphabet(sortedFiles)
-				});
+					files: this.formatByAlphabet(sortedFiles),
+					fileExtension: ''
+				} as FolderNode);
 			} else {
 				out.push({
 					fileName: key,
-					files: sortedFiles
-				});
+					files: sortedFiles,
+					fileExtension: ''
+				} as FolderNode);
 			}
 		});
 
 		return out;
 	}
 
-	isKotorArchive(object: any): object is Archive {
-		return 'files' in object;
-	}
 
-	formatByAlphabet(files: (KotorFile | Archive)[]) {
-		const sorted = new Map<string, (KotorFile | Archive)[]>();
+
+	formatByAlphabet(files: FileNode[]) {
+		const sorted = new Map<string, FileNode[]>();
 		files.forEach(file => {
 			if ( !sorted.has(file.fileName.charAt(0).toLowerCase()) ) {
 				sorted.set(file.fileName.charAt(0).toLowerCase(), []);

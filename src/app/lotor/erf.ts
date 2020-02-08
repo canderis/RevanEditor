@@ -1,7 +1,8 @@
-import { ErfArchive } from './file-types/erf-archive';
+
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ErfArchive } from './kotor-archives/erf-archive';
 // const fs = require('fs');
 
 export class Erf {

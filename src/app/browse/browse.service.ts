@@ -1,16 +1,16 @@
 import { Injectable, ApplicationRef } from "@angular/core";
-import { FileNode } from "../lotor/file-types/archive";
-import { KotorFileNode } from "../lotor/lotor.service";
+import { KotorFile, FileNode, isArchiveNode, ArchiveNode } from "../lotor/kotor-types";
+
 let ipcRenderer = require('electron').ipcRenderer;
 
 @Injectable({
 	providedIn: "root"
 })
 export class BrowseService {
-	selectedFile: FileNode;
-	openTabs: FileNode[] = [];
+	selectedFile: KotorFile;
+	openTabs: KotorFile[] = [];
 
-	tabHistory: FileNode[] = [];
+	tabHistory: KotorFile[] = [];
 
 	prefFile: FileNode = {
 		fileName: 'Preferences',
@@ -23,6 +23,7 @@ export class BrowseService {
 		});
 		ipcRenderer.on('save', (event, arg) => {
 			console.log('save', this.selectedFile);
+			this.selectedFile.save();
 		});
 		ipcRenderer.on('save-as', (event, arg) => {
 			console.log('save-as');
@@ -35,20 +36,15 @@ export class BrowseService {
 
 	}
 
-	isKotorFileNode(object: any): object is KotorFileNode {
-		return 'files' in object;
-	}
+	selectFile(file: FileNode) {
+		if (isArchiveNode(file)) {
+			this.selectedFile = (file as ArchiveNode).extract();
 
-
-	selectFile(file: FileNode | KotorFileNode) {
-		if (!this.isKotorFileNode(file)) {
-			this.selectedFile = file;
-
-			if (!this.openTabs.includes(file)) {
-				this.openTabs.unshift(file);
+			if (!this.openTabs.includes(this.selectedFile)) {
+				this.openTabs.unshift(this.selectedFile);
 			}
 
-			this.tabHistory.unshift(file);
+			this.tabHistory.unshift(this.selectedFile);
 		}
 	}
 

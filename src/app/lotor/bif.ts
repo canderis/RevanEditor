@@ -1,6 +1,5 @@
-import { Chitin } from './file-types/chitin-key-file';
-import { BifArchive } from './file-types/bif-archive';
-
+import { Chitin } from "./kotor-archives/chitin-key-file";
+import { BifArchive } from "./kotor-archives/bif-archive";
 
 const fs = require('fs');
 

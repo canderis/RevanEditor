@@ -1,6 +1,8 @@
 import { Component } from "@angular/core";
-import { LotorService, KotorFileNode } from "../../lotor/lotor.service";
+import { LotorService } from "../../lotor/lotor.service";
 import { PreferenceService } from "../../shared/services/preference.service";
+import { FolderNode } from "../../lotor/kotor-types";
+
 
 @Component({
 	selector: "file-browser",
@@ -9,9 +11,9 @@ import { PreferenceService } from "../../shared/services/preference.service";
 })
 export class FileBrowserComponent {
 
-	game: KotorFileNode[] = [];
+	game: FolderNode[] = [];
 
-	selectedGame: KotorFileNode = null;
+	selectedGame: FolderNode = null;
 
 	sidebarSelected = 'k1';
 
@@ -34,7 +36,6 @@ export class FileBrowserComponent {
 		}
 
 		this.selectedGame = this.game[0];
-		console.log(this.selectedGame);
 	}
 
 	selectView(v: string) {
