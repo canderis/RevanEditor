@@ -21,11 +21,16 @@ const ipcRenderer = require('electron').ipcRenderer;
 export class TwodaEditorComponent implements OnInit, AfterViewInit {
 	@ViewChild("table", { static: false }) table: ElementRef;
 
+	viewInit = false;
 	view: any;
 
 	_file: Twoda;
 	@Input() set file(file: Twoda) {
 		this._file = file;
+
+		if(this.viewInit) {
+			this.open();
+		}
 	}
 
 	get file() {
@@ -40,28 +45,42 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 
 	ngOnInit() {}
 
-	ngAfterViewInit(): void {
+	open() {
 		this._file.open();
+		this.view?.destroy();
+		console.log('loading');
 
-		this.view = jexcel(this.table.nativeElement, {
-			data: this.file.data,
-			columns: this.file.columns,
-			allowExport: false,
-			columnSorting: false,
-			columnDrag: false,
-			columnResize: true,
-			rowResize: false,
-			rowDrag: false,
-			allowInsertRow: true,
-			allowManualInsertRow: true,
-			allowInsertColumn: false,
-			allowManualInsertColumn: false,
-			allowDeleteRow: true,
-			allowDeletingAllRows: false,
-			allowDeleteColumn: false,
-			allowRenameColumn: false,
-			onafterchanges: this.fileChanged.bind(this)
-		});
+		setTimeout( () => {
+			this.view = jexcel(this.table.nativeElement, {
+				data: this._file.data,
+				columns: this._file.columns,
+				allowExport: false,
+				columnSorting: false,
+				columnDrag: false,
+				columnResize: true,
+				rowResize: false,
+				rowDrag: false,
+				allowInsertRow: true,
+				allowManualInsertRow: true,
+				allowInsertColumn: false,
+				allowManualInsertColumn: false,
+				allowDeleteRow: true,
+				allowDeletingAllRows: false,
+				allowDeleteColumn: false,
+				allowRenameColumn: false,
+				// lazyLoading:true,
+				// loadingSpin:true,
+				// fullscreen:true,
+				onafterchanges: this.fileChanged.bind(this)
+			});
+		}, 10);
+	}
+
+	ngAfterViewInit(): void {
+		if(this.file) {
+			this.open();
+		}
+		this.viewInit = true;
 	}
 
 	fileChanged(el: any, records: JExcelChangedRecord[]) {

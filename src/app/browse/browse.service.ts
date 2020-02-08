@@ -64,6 +64,8 @@ export class BrowseService {
 
 	openFile(file: KotorFile) {
 		this.selectedFile = file;
+		this.ref.tick();
+
 		if (!this.openTabs.includes(this.selectedFile)) {
 			this.openTabs.unshift(this.selectedFile);
 		}

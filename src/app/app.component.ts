@@ -28,6 +28,12 @@ export class AppComponent {
 
 		ipcRenderer.on('goto-pref', (event, arg) => {
             console.log('goto pref');
-        });
+		});
+
+		// const log = console.log;
+		// console.log = (message?: any, ...optionalParams: any[]) => {
+		// 	log('hello!')
+		// 	log(message, ...optionalParams);
+		// }
 	}
 }

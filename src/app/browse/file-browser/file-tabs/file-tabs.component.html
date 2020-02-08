@@ -1,7 +1,7 @@
 <div  class="tab-bar">
 	<ul *ngIf="browseService.openTabs.length > 0">
-		<li [ngClass]="{selected: browseService.selectedFile === tab }" *ngFor="let tab of browseService.openTabs; let i = index">
-			<span (click)="browseService.selectFile(tab)" >
+		<li [ngClass]="{selected: browseService.selectedFile === tab }" *ngFor="let tab of browseService.openTabs; let i = index;">
+			<span (click)="browseService.openFile(tab)" >
 				{{ tab.fileName }}
 			</span>
 			<button (click)="browseService.closeTab(i)" class="btn close-btn">x</button>

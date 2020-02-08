@@ -15,7 +15,7 @@ export class Twoda extends KotorFile {
 		super( fileName, fileExtension, buffer);
 	}
 
-	open() {
+	decompile() {
 		const format = this.buffer.toString("utf-8", 0, 8);
 		console.log(format);
 
