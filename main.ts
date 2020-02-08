@@ -112,7 +112,6 @@ function createWindow() {
 			label: "Edit",
 			submenu: [
 				{
-					label: "undo",
 					click(item: any, focusedWindow: any) {
 						win.webContents.send('undo');
 					},

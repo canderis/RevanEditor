@@ -69,10 +69,12 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 				allowDeleteColumn: false,
 				allowRenameColumn: false,
 				// lazyLoading:true,
-				// loadingSpin:true,
+				loadingSpin:true,
 				// fullscreen:true,
-				onafterchanges: this.fileChanged.bind(this)
+				onafterchanges: this.fileChanged.bind(this),
+				ondeleterow: this.onDeleteRow.bind(this)
 			});
+			console.log(this.view);
 		}, 10);
 	}
 
@@ -89,6 +91,12 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 			this.file.changeRow(record.row, record.col, record.newValue)
 		);
 	}
+
+	onDeleteRow(el: any, row: number, deleted: number) {
+		this.file.data.splice(row, deleted);
+	}
+
+
 }
 
 interface JExcelChangedRecord {

@@ -1,31 +1,34 @@
 import { KotorFile } from "./kotor-file";
 
 interface TwodaColumn {
-	type: string,
-	title: string,
-	width: number
+	type: string;
+	title: string;
+	width: number;
 }
 
 export class Twoda extends KotorFile {
 	columns: TwodaColumn[];
-	data: any;
+	data: any[];
 	labels: string[];
 
-	constructor(public fileName: string, public fileExtension: string, public buffer: Buffer) {
-		super( fileName, fileExtension, buffer);
+	constructor(
+		public fileName: string,
+		public fileExtension: string,
+		public buffer: Buffer
+	) {
+		super(fileName, fileExtension, buffer);
 	}
 
 	decompile() {
 		const format = this.buffer.toString("utf-8", 0, 8);
-		console.log(format);
 
 		const startOfHeaders = ("2DA V2.b" + "\n").length;
 		const endOfHeaders = this.buffer.indexOf("\x00", startOfHeaders);
-		const labels = this.labels = this.buffer
+		const labels = (this.labels = this.buffer
 			.slice(startOfHeaders, endOfHeaders)
 			.toString()
 			.split(/\s/)
-			.filter(Boolean);
+			.filter(Boolean));
 
 		this.columns = labels.map((label: string) => {
 			return {
@@ -38,14 +41,12 @@ export class Twoda extends KotorFile {
 		let position = endOfHeaders + 1;
 
 		const rowCt = this.buffer.readUInt32LE(position);
-		// console.log(labels, rowCt);
 
 		position += 4;
 
 		for (let i = 0; i < rowCt; i++) {
 			let jump = this.buffer.indexOf("\t", position);
 			if (jump !== -1) {
-				//console.log('jump ' + jump);
 				position = jump + 1;
 			} else {
 				console.error(
@@ -100,13 +101,11 @@ export class Twoda extends KotorFile {
 	}
 
 	async compile() {
-
 		const labels = this.labels;
 		const rows = this.data;
 		const indices = Array.from(Array(rows.length).keys());
 
-
-		const BINARY_PROLOGUE = '2DA V2.b';
+		const BINARY_PROLOGUE = "2DA V2.b";
 
 		let preamble_size =
 			(BINARY_PROLOGUE + "\n").length +
@@ -128,7 +127,7 @@ export class Twoda extends KotorFile {
 				if (value_hash[val] !== undefined) {
 					continue;
 				}
-				console.log(val);
+
 				value_hash[val] = value_pos;
 				value_pos += val.length;
 				value_pos += 1; // null pad
@@ -152,11 +151,9 @@ export class Twoda extends KotorFile {
 		// row indices
 		//buf.write([...twoDA.rows.keys()].join('\t') + '\t', buf_pos);
 		buf.write(indices.join("\t") + "\t", buf_pos);
-		buf_pos +=
-			[...rows.keys()].join("\t").length + 1; // trailing \t
+		buf_pos += [...rows.keys()].join("\t").length + 1; // trailing \t
 		// offsets
 		for (let row of rows) {
-			//console.log(row);
 			for (let index of labels) {
 				let val = row[index] === "****" ? "" : row[index];
 				buf.writeUInt16LE(value_hash[val], buf_pos);
@@ -170,7 +167,6 @@ export class Twoda extends KotorFile {
 		values.sort((a, b) => {
 			return value_hash[a] - value_hash[b];
 		});
-		//console.log(values);
 		buf.write(values.join("\0") + "\0", buf_pos);
 
 		return buf;

@@ -39,7 +39,16 @@ export class BrowseService {
 			})
 		});
 		ipcRenderer.on('save', async (event, arg) => {
-			console.log('save-as');
+			const file = this.selectedFile;
+			const buffer = await file.save();
+
+			dialog.showSaveDialog({
+				defaultPath: `${file.fileName.substr(0, file.fileName.length - 3)}${file.fileExtension}`
+			}).then(saveResult => {
+				if(!saveResult.canceled) {
+					writeFileSync(saveResult.filePath, buffer);
+				}
+			});
 		});
 
 		ipcRenderer.on('save-as', async (event, arg) => {
