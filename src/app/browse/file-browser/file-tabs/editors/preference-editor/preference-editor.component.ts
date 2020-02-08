@@ -23,14 +23,13 @@ export class PreferenceEditorComponent implements OnInit {
 		const dialog = remote.dialog;
 		dialog.showOpenDialog(
 			{ properties: ["openDirectory"], title: "Browse for game" },
-			(fileNames: string[]) => {
-				if (!fileNames || fileNames.length < 1) {
-					return false;
-				}
-				this.directories[i] = fileNames[0];
-				this.cdRef.detectChanges();
+		).then( res => {
+			if (!res.filePaths || res.filePaths.length < 1) {
+				return false;
 			}
-		);
+			this.directories[i] = res.filePaths[0];
+			this.cdRef.detectChanges();
+		});
 	}
 
 	save() {
