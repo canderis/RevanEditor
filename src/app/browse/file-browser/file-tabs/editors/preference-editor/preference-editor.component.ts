@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
 import { PreferenceService } from "../../../../../shared/services/preference.service";
+import { remote } from 'electron'
 
 @Component({
 	selector: "app-preference-editor",
@@ -19,8 +20,6 @@ export class PreferenceEditorComponent implements OnInit {
 	}
 
 	browse(i: number) {
-		const remote = require("electron").remote;
-
 		const dialog = remote.dialog;
 		dialog.showOpenDialog(
 			{ properties: ["openDirectory"], title: "Browse for game" },
