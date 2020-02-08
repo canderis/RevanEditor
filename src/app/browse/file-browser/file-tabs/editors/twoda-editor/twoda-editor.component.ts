@@ -10,8 +10,7 @@ import { Twoda } from "../../../../../lotor/file-types/twoda";
 
 const jexcel = require("jexcel");
 
-const ipcRenderer = require('electron').ipcRenderer;
-
+const ipcRenderer = require("electron").ipcRenderer;
 
 @Component({
 	selector: "app-twoda-editor",
@@ -28,7 +27,7 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 	@Input() set file(file: Twoda) {
 		this._file = file;
 
-		if(this.viewInit) {
+		if (this.viewInit) {
 			this.open();
 		}
 	}
@@ -38,8 +37,8 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 	}
 
 	constructor() {
-		ipcRenderer.on('undo', (event, arg) => {
-			console.log('undo');
+		ipcRenderer.on("undo", (event, arg) => {
+			console.log("undo");
 		});
 	}
 
@@ -48,9 +47,9 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 	open() {
 		this._file.open();
 		this.view?.destroy();
-		console.log('loading');
+		console.log("loading");
 
-		setTimeout( () => {
+		setTimeout(() => {
 			this.view = jexcel(this.table.nativeElement, {
 				data: this._file.data,
 				columns: this._file.columns,
@@ -69,17 +68,18 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 				allowDeleteColumn: false,
 				allowRenameColumn: false,
 				// lazyLoading:true,
-				loadingSpin:true,
+				loadingSpin: true,
 				// fullscreen:true,
 				onafterchanges: this.fileChanged.bind(this),
-				ondeleterow: this.onDeleteRow.bind(this)
+				ondeleterow: this.onDeleteRow.bind(this),
+				oninsertrow: this.onInsertRow.bind(this)
 			});
 			console.log(this.view);
 		}, 10);
 	}
 
 	ngAfterViewInit(): void {
-		if(this.file) {
+		if (this.file) {
 			this.open();
 		}
 		this.viewInit = true;
@@ -96,7 +96,19 @@ export class TwodaEditorComponent implements OnInit, AfterViewInit {
 		this.file.data.splice(row, deleted);
 	}
 
+	onInsertRow(el: any, row: number, inserted: number) {
+		const blank: any = {};
+		this.file.labels.forEach(label => (blank[label] = ""));
+		// console.log(blank, Array(inserted), Array(inserted).map(e => ({...blank})));
 
+		console.log(Array(inserted).map(e => "hello"));
+		this.file.data.splice(
+			row,
+			0,
+			...Array.from(Array(inserted)).fill({ ...blank })
+		);
+		console.log(this.file);
+	}
 }
 
 interface JExcelChangedRecord {
