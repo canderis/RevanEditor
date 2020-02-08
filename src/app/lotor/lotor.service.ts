@@ -80,13 +80,15 @@ export class LotorService {
 					out.push({
 						fileName: key,
 						files: this.formatByAlphabet(sortedFiles),
-						archivePath: ''
+						archivePath: '',
+						fileExtension: ''
 					});
 				} else {
 					out.push({
 						fileName: key,
 						files: sortedFiles,
-						archivePath: ''
+						archivePath: '',
+						fileExtension: ''
 					});
 				}
 			});
@@ -164,7 +166,8 @@ export class LotorService {
 			out.push({
 				fileName: key,
 				files: sortedFiles,
-				archivePath: ''
+				archivePath: '',
+				fileExtension: ''
 			});
 		});
 

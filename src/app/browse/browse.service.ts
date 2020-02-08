@@ -22,7 +22,7 @@ export class BrowseService {
 			console.log('open');
 		});
 		ipcRenderer.on('save', (event, arg) => {
-			console.log('save');
+			console.log('save', this.selectedFile);
 		});
 		ipcRenderer.on('save-as', (event, arg) => {
 			console.log('save-as');
