@@ -1,8 +1,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { RimArchive } from './file-types/rim-archive';
-// const fs = require('fs');
+import { RimArchive } from './kotor-archives/rim-archive';
 
 export class Rim {
 	directory: string;

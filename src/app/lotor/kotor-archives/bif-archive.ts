@@ -1,10 +1,11 @@
-import { BifFile } from './bif-file';
-import { Archive } from './archive';
+
+import { BifArchiveNode } from './bif-archive-node';
+import { Archive } from '../kotor-types';
 
 export class BifArchive extends Archive {
 	fileName: string;
 	directory: string;
-	files: BifFile[] = [];
+	files: BifArchiveNode[] = [];
 
 	constructor(
 		public size_of_file: number,
@@ -22,7 +23,7 @@ export class BifArchive extends Archive {
 			.replace(/\0/g, '');
 	}
 
-	addBif(file: BifFile) {
+	addBif(file: BifArchiveNode) {
 
 		file.archive = this;
 		this.files.push(file);

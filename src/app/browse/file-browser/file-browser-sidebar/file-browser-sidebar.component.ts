@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from "@angular/core";
-import { KotorFile, Archive } from "../../../lotor/file-types/archive";
+
 import { BrowseService } from "../../browse.service";
+import { FileNode, FolderNode } from "../../../lotor/kotor-types";
 
 @Component({
 	selector: "app-file-browser-sidebar",
@@ -8,7 +9,7 @@ import { BrowseService } from "../../browse.service";
 	styleUrls: ["./file-browser-sidebar.component.scss"]
 })
 export class FileBrowserSidebarComponent implements OnInit {
-	@Input() node: (Archive & KotorFile);
+	@Input() node: FolderNode;
 	@Input() expanded: boolean;
 	@Input() top: boolean = false;
 

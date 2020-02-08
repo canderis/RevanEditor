@@ -1,6 +1,6 @@
-import { BifFile } from './bif-file';
 import { BifArchive } from './bif-archive';
-import * as fs from 'fs';
+import { readSync } from 'fs';
+import { BifArchiveNode } from './bif-archive-node';
 
 /*
 	The chitin header gives information on how to parse the contents of the bif file.
@@ -37,7 +37,7 @@ export class Chitin {
 
 	readChitinHeader(fd: number) {
 		const buffer = Buffer.alloc(this.__HEADER_LENGTH__);
-		fs.readSync(fd, buffer, 0, this.__HEADER_LENGTH__, 0);
+		readSync(fd, buffer, 0, this.__HEADER_LENGTH__, 0);
 
 		this.number_of_bif_files = buffer.readUInt32LE(8);
 		this.number_of_entries_in_chitin_key = buffer.readUInt32LE(12);
@@ -57,7 +57,7 @@ export class Chitin {
 		this.fileTable = [];
 		for (let i = 0; i < this.number_of_bif_files; i++) {
 			const buffer = Buffer.alloc(12);
-			fs.readSync(
+			readSync(
 				fd,
 				buffer,
 				0,
@@ -74,7 +74,7 @@ export class Chitin {
 
 			const filenameBuffer = Buffer.alloc(length_of_filename);
 
-			fs.readSync(
+			readSync(
 				fd,
 				filenameBuffer,
 				0,
@@ -101,7 +101,7 @@ export class Chitin {
 	parseTableOfKeys(fd: number) {
 		for (let i = 0; i < this.number_of_entries_in_chitin_key; i++) {
 			const buffer = Buffer.alloc(22);
-			fs.readSync(
+			readSync(
 				fd,
 				buffer,
 				0,
@@ -112,7 +112,7 @@ export class Chitin {
 			const file_extension_code = buffer.readUInt16LE(16);
 			const uniqueId = buffer.readUInt32LE(18);
 
-			const file = new BifFile(resref, file_extension_code, uniqueId);
+			const file = new BifArchiveNode(resref, file_extension_code, uniqueId);
 
 			this.fileTable[file.bifIndex].addBif(file);
 		}

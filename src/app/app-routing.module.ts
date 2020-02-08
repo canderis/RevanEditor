@@ -5,12 +5,8 @@ import { PageNotFoundComponent } from './shared/components';
 const routes: Routes = [
 	{
 		path: '',
-		redirectTo: 'home',
+		redirectTo: 'browse',
 		pathMatch: 'full'
-	},
-	{
-		path: 'settings',
-		loadChildren: () => import('./settings/settings.module').then(m => m.SettingsModule),
 	},
 	{
 		path: 'browse',

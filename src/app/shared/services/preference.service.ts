@@ -13,39 +13,25 @@ export class PreferenceService {
 	preferenceFile: string;
 	_directories: string[];
 
-	set directoryPaths(paths: string[]) {
-		const fs = require('fs');
+	set directories(paths: string[]) {
+		localStorage.setItem('paths', JSON.stringify(paths));
+		this._directories = [...paths];
 
-		this._preferences.directories = paths;
-		fs.writeFileSync(this.preferenceFile,  JSON.stringify(this._preferences) );
+
 	}
 
-	getPreferences() {
-		return new Observable<Preferences>( observer => {
-			if (!this._preferences) {
-				this.loadFile();
+	get directories() {
+		if(!this._directories) {
+			const d = localStorage.getItem('paths');
+			if (d) {
+				this._directories = JSON.parse(d);
 			}
-
-			observer.next(this._preferences);
-			observer.complete();
-		});
-	}
-
-	loadFile() {
-		const remote = require('electron').remote;
-		const fs = require('fs');
-
-		const app = remote.app;
-		const path = require('path');
-
-		this.preferenceFile = path.join(app.getPath('userData'), '/RevanEditorPreferences.json');
-
-		if ( !fs.existsSync(this.preferenceFile) ) {
-			fs.writeFileSync(this.preferenceFile, JSON.stringify({directories: []}) );
+			else {
+				this._directories = [];
+			}
 		}
 
-		const settings = JSON.parse(fs.readFileSync(this.preferenceFile) );
-		this._preferences = settings;
+		return [...this._directories];
 	}
 
 	constructor() {}

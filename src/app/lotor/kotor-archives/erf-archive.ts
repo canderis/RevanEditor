@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { FileExtensions } from '../file-extensions';
-import { Archive } from './archive';
-import { ErfFile } from './erf-file';
+import { ErfArchiveNode } from './erf-archive-node';
+import { Archive } from '../kotor-types';
 
 
 interface ErfHeader {
@@ -36,7 +36,7 @@ export class ErfArchive extends Archive {
 	header: ErfHeader;
 
 	fd: number;
-	files: ErfFile[];
+	files: ErfArchiveNode[];
 
 	constructor(public fileName: string, public archivePath: string, private game: 'KOTOR' | 'TSL') {
 		super();
@@ -157,7 +157,7 @@ export class ErfArchive extends Archive {
 
 			const respos = this.header.entry_count * ErfArchive.sizes.key + (i * ErfArchive.sizes.resource);
 
-			const res = new ErfFile(
+			const res = new ErfArchiveNode(
 				`${key.fileName}.${key.fileExtension}`,
 				key.fileExtension,
 				buffer.readUInt32LE(respos),

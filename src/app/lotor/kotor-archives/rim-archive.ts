@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { FileExtensions } from '../file-extensions';
-import { Archive } from './archive';
-import { RimFile } from './rim-file';
 
+import { RimArchiveNode } from './rim-archive-node';
+import { Archive } from '../kotor-types';
 
 interface RimHeader {
 	type: string;
@@ -32,7 +32,7 @@ export class RimArchive extends Archive {
 	header: RimHeader;
 
 	fd: number;
-	files: RimFile[];
+	files: RimArchiveNode[];
 
 	constructor(public fileName: string, public archivePath: string, private game: 'KOTOR' | 'TSL') {
 		super();
@@ -148,7 +148,7 @@ export class RimArchive extends Archive {
 
 			// const respos = this.header.entry_count * RimArchive.sizes.key + (i * RimArchive.sizes.resource);
 
-			const res = new RimFile(
+			const res = new RimArchiveNode(
 				`${key.fileName}.${key.fileExtension}`,
 				key.fileExtension,
 				buffer.readUInt32LE(keypos + 24),

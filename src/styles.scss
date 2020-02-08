@@ -12,6 +12,8 @@ html, body {
 
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 
+@import "~jexcel/dist/jexcel.css";
+
 .d-none {
 	display: none;
 }
@@ -56,4 +58,8 @@ i.k2-icon {
 
 .browse-area.as-split-area{
 	height: 100vh !important;
+}
+
+.jexcel_content {
+	max-height: 100%!important;
 }

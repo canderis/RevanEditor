@@ -1,6 +1,13 @@
-import { Injectable } from "@angular/core";
-import { KotorFile } from "../lotor/file-types/archive";
-import { KotorFileNode } from "../lotor/lotor.service";
+import { Injectable, ApplicationRef } from "@angular/core";
+import { FileNode, isArchiveNode, ArchiveNode } from "../lotor/kotor-types";
+import { KotorFile } from "../lotor/file-types/kotor-file";
+import { writeFileSync, readFileSync } from "fs";
+import { remote } from 'electron';
+import * as path from 'path';
+import { kotorFileFactory } from "../lotor/file-types/kotor-file-factory";
+
+const dialog = remote.dialog;
+let ipcRenderer = require('electron').ipcRenderer;
 
 @Injectable({
 	providedIn: "root"
@@ -11,22 +18,73 @@ export class BrowseService {
 
 	tabHistory: KotorFile[] = [];
 
-	constructor() {}
-
-	isKotorFileNode(object: any): object is KotorFileNode {
-		return 'files' in object;
+	prefFile: FileNode = {
+		fileName: 'Preferences',
+		fileExtension: 'pref',
 	}
 
+	constructor(private ref: ApplicationRef) {
+		ipcRenderer.on('open', (event, arg) => {
+			console.log('open');
+			dialog.showOpenDialog( {
+				properties: ['openFile']
+			}).then(selection => {
+				selection.filePaths.forEach( filepath => {
+					const buffer = readFileSync(filepath);
+					const filetype = path.extname(filepath).substring(1);
+					const filename = path.basename(filepath);
+					this.openFile(kotorFileFactory(filename, filetype, buffer));
+					this.ref.tick();
+				})
+			})
+		});
+		ipcRenderer.on('save', async (event, arg) => {
+			const file = this.selectedFile;
+			const buffer = await file.save();
 
-	selectFile(file: KotorFile | KotorFileNode) {
-		if (!this.isKotorFileNode(file)) {
-			this.selectedFile = file;
+			dialog.showSaveDialog({
+				defaultPath: `${file.fileName.substr(0, file.fileName.length - 3)}${file.fileExtension}`
+			}).then(saveResult => {
+				if(!saveResult.canceled) {
+					writeFileSync(saveResult.filePath, buffer);
+				}
+			});
+		});
 
-			if (!this.openTabs.includes(file)) {
-				this.openTabs.unshift(file);
-			}
+		ipcRenderer.on('save-as', async (event, arg) => {
+			const file = this.selectedFile;
+			const buffer = await file.save();
 
-			this.tabHistory.unshift(file);
+			dialog.showSaveDialog({
+				defaultPath: `${file.fileName.substr(0, file.fileName.length - 3)}${file.fileExtension}`
+			}).then(saveResult => {
+				if(!saveResult.canceled) {
+					writeFileSync(saveResult.filePath, buffer);
+				}
+			});
+		});
+		ipcRenderer.on('nav-prefs', (event, arg) => {
+			console.log('nav-prefs');
+			this.selectFile(this.prefFile);
+			this.ref.tick();
+		});
+
+	}
+
+	openFile(file: KotorFile) {
+		this.selectedFile = file;
+		this.ref.tick();
+
+		if (!this.openTabs.includes(this.selectedFile)) {
+			this.openTabs.unshift(this.selectedFile);
+		}
+
+		this.tabHistory.unshift(this.selectedFile);
+	}
+
+	selectFile(file: FileNode) {
+		if (isArchiveNode(file)) {
+			this.openFile((file as ArchiveNode).extract());
 		}
 	}
 

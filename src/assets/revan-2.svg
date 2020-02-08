@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="406px" height="406px" viewBox="0 0 287 406" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 55.2 (78181) - https://sketchapp.com -->
+    <title>Group 2</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <filter x="-16.8%" y="-11.6%" width="133.6%" height="123.2%" filterUnits="objectBoundingBox" id="filter-1">
+            <feOffset dx="8" dy="11" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="6" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Group-2" transform="translate(-91.000000, -34.000000)">
+            <g id="Revan" filter="url(#filter-1)" transform="translate(226.500000, 227.000000) scale(-1, 1) translate(-226.500000, -227.000000) translate(94.000000, 35.000000)">
+                <g id="Group">
+                    <path d="M0.609842516,105.97701 C16.5842041,42.0924403 68.3260291,0 129,0 C130.993159,0 132.993693,0.0325736113 135,0.0973897471 L135,129.96944 C133.017847,129.333264 131.017847,128.685122 129,128.025015 C71.6740201,175.211 32.8796265,195.369555 12.6168192,188.50068 C8.84639423,162.632732 4.84532539,135.135319 0.613612656,106.008441 C0.612188588,105.99864 0.610939411,105.988132 0.609857538,105.97695 Z" id="Combined-Shape" fill="#676361"></path>
+                    <polygon id="Path" fill="#676361" points="12.9322052 191.054596 21.6805079 250.555029 101.873235 362.064483 93.2473861 220.883662"></polygon>
+                    <polygon id="Path-3" fill="#5A0E19" points="12.9355553 191.130139 65.3424388 228.076615 103.83626 372.501247 135.00937 146.290251 135.00937 105.920417 0.572734918 105.920417"></polygon>
+                    <rect id="Rectangle" fill="#5A0E19" x="123" y="218" width="12" height="164"></rect>
+                    <polygon id="Path-2" fill="#676361" points="14 142 28.209737 183.831473 65.1145337 209.281643 103.550685 372.710538 123 383 123 142"></polygon>
+                    <polygon id="Path" fill="#5A0E19" points="71 142 104.54615 242 134 242 134 142"></polygon>
+                    <polygon id="Rectangle-2" fill="#121212" points="9 126 134 126 134 143 13.6055103 143"></polygon>
+                </g>
+                <g id="Group" transform="translate(189.000000, 192.000000) scale(-1, 1) translate(-189.000000, -192.000000) translate(113.000000, 0.000000)">
+                    <path d="M0.609842516,105.97701 C16.5842041,42.0924403 68.3260291,0 129,0 C130.993159,0 132.993693,0.0325736113 135,0.0973897471 L135,129.96944 C133.017847,129.333264 131.017847,128.685122 129,128.025015 C71.6740201,175.211 32.8796265,195.369555 12.6168192,188.50068 C8.84639423,162.632732 4.84532539,135.135319 0.613612656,106.008441 C0.612188588,105.99864 0.610939411,105.988132 0.609857538,105.97695 Z" id="Combined-Shape" fill="#676361"></path>
+                    <polygon id="Path" fill="#676361" points="12.9322052 191.054596 21.6805079 250.555029 101.873235 362.064483 93.2473861 220.883662"></polygon>
+                    <polygon id="Path-3" fill="#5A0E19" points="12.9355553 191.130139 65.3424388 228.076615 103.83626 372.501247 143.815378 147.679237 145.758016 105.920417 0.572734918 105.920417"></polygon>
+                    <rect id="Rectangle" fill="#5A0E19" x="123" y="229" width="12" height="153"></rect>
+                    <polygon id="Path-2" fill="#676361" points="14.7632656 142 29.0038644 183.887509 65.9888137 209.371772 104.508443 373.019593 124 383.322838 124 142"></polygon>
+                    <polygon id="Path" fill="#5A0E19" points="72 142 105.54615 242 135 242 135 142"></polygon>
+                    <polygon id="Rectangle-2" fill="#121212" points="9.37132686 126 152 126 152 143 14.6263494 143"></polygon>
+                </g>
+                <g id="Group" opacity="0.484598214" transform="translate(171.500000, 192.000000) scale(-1, 1) translate(-171.500000, -192.000000) translate(78.000000, 0.000000)" fill="#2B231F" fill-opacity="0.469999999">
+                    <path d="M150.787061,142 L150.84697,142 L124.031663,242.07335 L124.036105,242.129631 L124,247.003624 L124,383.322838 L104.508443,373.019593 L104.030903,370.990798 L103.83626,372.501247 L100.57242,360.255675 L21.6805079,250.555029 L12.9442092,191.13624 L12.9355553,191.130139 L0.572734918,105.920417 L0.901309208,105.920417 C16.924702,42.1274747 69.3778974,0 130,0 C151.071328,0 169.76776,3.58831941 186.048105,10.4039946 L150.787061,142 Z" id="Combined-Shape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,13 +1,10 @@
-import { Bif } from "./bif";
-import { Erf } from "./erf";
-import * as path from "path";
-import * as fs from "fs";
-import { Rim } from "./rim";
-import { ErfArchive } from "./file-types/erf-archive";
-import { RimArchive } from "./file-types/rim-archive";
-import { Archive, KotorFile } from "./file-types/archive";
-import { KotorFileNode } from "./lotor.service";
-import { Chitin } from "./file-types/chitin-key-file";
+
+import { join, extname } from 'path';
+import { existsSync, readdirSync, openSync, closeSync, readFileSync, lstatSync} from 'fs';
+import { ErfArchive } from './kotor-archives/erf-archive';
+import { RimArchive } from './kotor-archives/rim-archive';
+import { Chitin } from './kotor-archives/chitin-key-file';
+import { FileNode, FolderNode, ArchiveNode } from './kotor-types';
 
 const FILE_TYPES: { [key: string]: any } = {
 	// 'bif': Bif,
@@ -20,7 +17,7 @@ export class Game {
 	// bif: Bif;
 	// erf: Erf;
 	// rim: Rim;
-	files: (KotorFile | Archive)[];
+	files: FileNode[];
 
 	game: "KOTOR" | "TSL";
 	chitin: Chitin;
@@ -28,16 +25,18 @@ export class Game {
 	constructor(dir: string) {
 		const directory = dir;
 
-		if (!fs.existsSync(directory)) {
+		if (!existsSync(directory)) {
 			console.log("directory does not exist");
 			return;
 		}
 
-		const data = fs.readdirSync(directory);
+		const data = readdirSync(directory);
 
 		const key = data.find(row => {
 			return row === "chitin.key";
 		});
+
+		console.log(data);
 
 		if (!key) {
 			console.log("invalid directory");
@@ -54,30 +53,31 @@ export class Game {
 			this.game = "KOTOR";
 		}
 
-		const fd = fs.openSync(`${directory}/chitin.key`, 'r');
+		const fd = openSync(`${directory}/chitin.key`, 'r');
 		this.chitin = new Chitin(directory, fd);
 
 		const bifFiles = this.chitin.getBifArchives(fd);
 
-		fs.closeSync(fd);
+		closeSync(fd);
 		// console.log(fList);
 
 		this.files = this.buildTree(directory).filter(f => f.fileName !== 'data');
 		this.files.unshift({
 			fileName: 'data',
-			files: bifFiles as Archive[],
-			archivePath: path.join(directory, 'data'),
-		} as Archive);
+			files: bifFiles,
+			archivePath: join(directory, 'data'),
+			fileExtension: 'bif'
+		} as FileNode) ;
 	}
 
-	buildTree(directory: string): (KotorFile | Archive)[] {
-		const fList = fs.readdirSync(directory);
+	buildTree(directory: string): FileNode[] {
+		const fList = readdirSync(directory);
 
 		return fList
 			.map(p => {
-				const archivePath = path.join(directory, p);
-				const fileExtension = path.extname(p).substring(1);
-				if (fs.lstatSync(archivePath).isDirectory()) {
+				const archivePath = join(directory, p);
+				const fileExtension = extname(p).substring(1);
+				if (lstatSync(archivePath).isDirectory()) {
 					return {
 						archivePath,
 						fileName: p,
@@ -98,7 +98,7 @@ export class Game {
 					archivePath,
 					fileName: p,
 					fileExtension,
-					extract: () => fs.readFileSync(archivePath, {encoding: 'utf-8'})
+					extract: () => readFileSync(archivePath, {encoding: 'utf-8'})
 				};
 			})
 			// .filter(p => fs.lstatSync(p.archivePath).isDirectory())
