@@ -1,6 +1,12 @@
 import { Injectable, ApplicationRef } from "@angular/core";
-import { KotorFile, FileNode, isArchiveNode, ArchiveNode } from "../lotor/kotor-types";
+import { FileNode, isArchiveNode, ArchiveNode } from "../lotor/kotor-types";
+import { KotorFile } from "../lotor/file-types/kotor-file";
+import { writeFileSync, readFileSync } from "fs";
+import { remote } from 'electron';
+import * as path from 'path';
+import { kotorFileFactory } from "../lotor/file-types/kotor-file-factory";
 
+const dialog = remote.dialog;
 let ipcRenderer = require('electron').ipcRenderer;
 
 @Injectable({
@@ -20,13 +26,33 @@ export class BrowseService {
 	constructor(private ref: ApplicationRef) {
 		ipcRenderer.on('open', (event, arg) => {
 			console.log('open');
+			dialog.showOpenDialog( {
+				properties: ['openFile']
+			}).then(selection => {
+				selection.filePaths.forEach( filepath => {
+					const buffer = readFileSync(filepath);
+					const filetype = path.extname(filepath).substring(1);
+					const filename = path.basename(filepath);
+					this.openFile(kotorFileFactory(filename, filetype, buffer));
+					this.ref.tick();
+				})
+			})
 		});
-		ipcRenderer.on('save', (event, arg) => {
-			console.log('save', this.selectedFile);
-			this.selectedFile.save();
-		});
-		ipcRenderer.on('save-as', (event, arg) => {
+		ipcRenderer.on('save', async (event, arg) => {
 			console.log('save-as');
+		});
+
+		ipcRenderer.on('save-as', async (event, arg) => {
+			const file = this.selectedFile;
+			const buffer = await file.save();
+
+			dialog.showSaveDialog({
+				defaultPath: `${file.fileName.substr(0, file.fileName.length - 3)}${file.fileExtension}`
+			}).then(saveResult => {
+				if(!saveResult.canceled) {
+					writeFileSync(saveResult.filePath, buffer);
+				}
+			});
 		});
 		ipcRenderer.on('nav-prefs', (event, arg) => {
 			console.log('nav-prefs');
@@ -36,15 +62,18 @@ export class BrowseService {
 
 	}
 
+	openFile(file: KotorFile) {
+		this.selectedFile = file;
+		if (!this.openTabs.includes(this.selectedFile)) {
+			this.openTabs.unshift(this.selectedFile);
+		}
+
+		this.tabHistory.unshift(this.selectedFile);
+	}
+
 	selectFile(file: FileNode) {
 		if (isArchiveNode(file)) {
-			this.selectedFile = (file as ArchiveNode).extract();
-
-			if (!this.openTabs.includes(this.selectedFile)) {
-				this.openTabs.unshift(this.selectedFile);
-			}
-
-			this.tabHistory.unshift(this.selectedFile);
+			this.openFile((file as ArchiveNode).extract());
 		}
 	}
 

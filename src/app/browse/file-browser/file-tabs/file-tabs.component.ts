@@ -3,9 +3,7 @@ import { Component, OnInit } from "@angular/core";
 import { TPCTexture } from "../../../lotor/file-types/tpc";
 import { writeTGA } from "../../../lotor/file-types/tga";
 import { BrowseService } from "../../browse.service";
-import { remote } from "electron";
-import { writeFileSync } from 'fs';
-import { KotorFile } from "../../../lotor/kotor-types";
+import { KotorFile } from "../../../lotor/file-types/kotor-file";
 
 @Component({
 	selector: "app-file-tabs",

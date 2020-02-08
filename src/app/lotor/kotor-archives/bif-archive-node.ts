@@ -5,9 +5,10 @@ import { BifArchive } from "./bif-archive";
 import { openSync, readSync } from "original-fs";
 
 import { FileExtensions } from "../file-extensions";
-import { ArchiveNode, KotorFile } from "../kotor-types";
+import { ArchiveNode } from "../kotor-types";
 
-import { kotorFileFactory } from '../file-types/kotor-file';
+import { KotorFile } from '../file-types/kotor-file';
+import { kotorFileFactory } from "../file-types/kotor-file-factory";
 
 export class BifArchiveNode implements ArchiveNode {
 	archive: BifArchive;

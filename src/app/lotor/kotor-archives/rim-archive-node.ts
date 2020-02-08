@@ -1,8 +1,9 @@
 
 import { readSync } from 'fs';
 import { RimArchive } from './rim-archive';
-import { ArchiveNode, KotorFile } from '../kotor-types';
-import { kotorFileFactory } from '../file-types/kotor-file';
+import { ArchiveNode } from '../kotor-types';
+import { KotorFile } from '../file-types/kotor-file';
+import { kotorFileFactory } from "../file-types/kotor-file-factory";
 
 export class RimArchiveNode implements ArchiveNode {
 	archive: RimArchive;

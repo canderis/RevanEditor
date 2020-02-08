@@ -1,23 +1,18 @@
-import { KotorFile } from "../kotor-types";
-import { Twoda } from "./twoda";
+import { dialog } from "electron";
+import { writeFileSync } from "fs";
 
+export class KotorFile {
+	constructor(public fileName: string, public fileExtension: string, public buffer: Buffer) {}
 
-export function kotorFileFactory(
-	fileName: string,
-	fileExtension: string,
-	buffer: Buffer
-): KotorFile {
-	switch (fileExtension) {
-		case "2da":
-			return new Twoda(fileName, fileExtension, buffer);
-
-		default:
-			return {
-				fileName: this.fileName,
-				fileExtension: this.fileExtension,
-				save: () => {},
-				open: () => {},
-				buffer
-			};
+	// Override this method in child classes
+	async compile(): Promise<Buffer> {
+		return this.buffer;
 	}
+
+	async save(): Promise<Buffer> {
+		return await this.compile();
+	};
+
+
+	open() {};
 }

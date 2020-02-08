@@ -1,6 +1,4 @@
-import { KotorFile } from "../kotor-types";
-import { dialog } from "electron";
-import { writeFileSync } from "fs";
+import { KotorFile } from "./kotor-file";
 
 interface TwodaColumn {
 	type: string,
@@ -8,13 +6,13 @@ interface TwodaColumn {
 	width: number
 }
 
-export class Twoda implements KotorFile {
+export class Twoda extends KotorFile {
 	columns: TwodaColumn[];
-	data: string[];
+	data: any;
 	labels: string[];
 
 	constructor(public fileName: string, public fileExtension: string, public buffer: Buffer) {
-
+		super( fileName, fileExtension, buffer);
 	}
 
 	open() {
@@ -101,21 +99,12 @@ export class Twoda implements KotorFile {
 		this.data = out;
 	}
 
-	async save() {
+	async compile() {
 
 		const labels = this.labels;
-		const rows = this.data.map( (row: any) => {
-			const r: any = {};
-			for ( let i = 0; i < labels.length; i++) {
-				r[labels[i]] = row[i];
-			}
-
-			return r;
-		});
-
+		const rows = this.data;
 		const indices = Array.from(Array(rows.length).keys());
 
-		console.log(rows, labels, indices);
 
 		const BINARY_PROLOGUE = '2DA V2.b';
 
@@ -130,15 +119,11 @@ export class Twoda implements KotorFile {
 			1 + // trailing \t
 			2 * (rows.length * labels.length) + // offsets
 			2; // 2x null pad
-		console.log("preamble size: " + preamble_size);
+
 		let value_pos = 0;
 		let value_hash: any = {};
 		for (let row of rows) {
-
-
 			for (let index of labels) {
-
-				console.log(index)
 				let val = row[index] === "****" ? "" : row[index];
 				if (value_hash[val] !== undefined) {
 					continue;
@@ -149,8 +134,7 @@ export class Twoda implements KotorFile {
 				value_pos += 1; // null pad
 			}
 		}
-		console.log("empty element offset: " + value_hash[""]);
-		console.log("data size: " + value_pos);
+
 		let buf = new Buffer(preamble_size + value_pos);
 		let buf_pos = 0;
 		// prologue
@@ -189,10 +173,10 @@ export class Twoda implements KotorFile {
 		//console.log(values);
 		buf.write(values.join("\0") + "\0", buf_pos);
 
-		const fileNames = await dialog.showSaveDialog({
-			defaultPath: `${this.fileName.substr(0, this.fileName.length - 3)}2da`
-		});
+		return buf;
+	}
 
-		writeFileSync(fileNames.filePath, buf);
+	changeRow(row: number, col: number, val: any) {
+		this.data[row][this.labels[col]] = val;
 	}
 }

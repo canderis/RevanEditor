@@ -111,7 +111,13 @@ function createWindow() {
 		{
 			label: "Edit",
 			submenu: [
-				{ role: "undo" },
+				{
+					label: "undo",
+					click(item: any, focusedWindow: any) {
+						win.webContents.send('undo');
+					},
+					role: "undo"
+				},
 				{ role: "redo" },
 				{ type: "separator" },
 				{ role: "cut" },

@@ -1,3 +1,5 @@
+import { KotorFile } from "./file-types/kotor-file";
+
 export interface FileNode {
 	fileName: string;
 	fileExtension: string;
@@ -22,16 +24,6 @@ export abstract class Archive implements FolderNode {
 	constructor() {}
 }
 
-export abstract class KotorFile implements FileNode {
-	fileName: string;
-	fileExtension: string;
-	buffer: Buffer;
-
-	constructor(fileName: string, fileExtension: string, buffer: Buffer) {}
-
-	abstract save(): void;
-	abstract open(): void;
-}
 
 export function isFolderNode(object: any): object is FolderNode {
 	return "files" in object;

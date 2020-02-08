@@ -1,6 +1,5 @@
 import { Component, OnInit, Input } from "@angular/core";
-import { KotorFile } from "../../../../../lotor/kotor-types";
-
+import { KotorFile } from "../../../../../lotor/file-types/kotor-file";
 
 @Component({
 	selector: "app-text-editor",

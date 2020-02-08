@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, ViewChild, ElementRef } from "@angular/core";
 import { TPCLoader, TPCTexture } from "../../../../../lotor/file-types/tpc";
-import { KotorFile } from "../../../../../lotor/kotor-types";
+import { KotorFile } from "../../../../../lotor/file-types/kotor-file";
+
 
 @Component({
 	selector: "app-tpc-editor",
