@@ -6,6 +6,12 @@ interface TwodaColumn {
 	width: number;
 }
 
+/*
+ * @author ndixUR / https://github.com/ndixUR/
+ * @author Canderis / https://shuffman.com/
+ */
+
+
 export class Twoda extends KotorFile {
 	columns: TwodaColumn[];
 	data: any[];

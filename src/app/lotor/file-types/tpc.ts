@@ -49,9 +49,9 @@ const TPC_TYPE_NO_MIP = 0,
 const SIZE_HEADER = 128;
 
 /*
-
  * @author ndixUR / https://github.com/ndixUR/
  * @author mrdoob / http://mrdoob.com/
+ * @author Canderis / https://shuffman.com/
  */
 
 export class TPC extends KotorFile {
