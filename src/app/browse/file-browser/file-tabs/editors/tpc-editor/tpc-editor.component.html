@@ -1,10 +1,10 @@
 <div  class="preview" #previewArea>
 
 </div>
-<div class="txi-area" *ngIf="img?.extensionString">
+<div class="txi-area" *ngIf="file.texture?.extensionString">
 	<h3 class="mat-h3">TXI:</h3>
 	<mat-form-field>
-		<textarea mat-autosize matInput class="mat" [value]="img.extensionString"></textarea>
+		<textarea mat-autosize matInput class="mat" [value]="file.texture.extensionString"></textarea>
 	</mat-form-field>
 </div>
 <div class="txi-area">

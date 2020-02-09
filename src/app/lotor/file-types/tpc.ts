@@ -1,1016 +1,767 @@
-/*
- * @author ndixUR / https://github.com/ndixUR/
- * @author mrdoob / http://mrdoob.com/
- * @author canderis / https://shuffman.com/
- */
+import { KotorFile } from "./kotor-file";
+import { Texture } from "three";
 
-import * as THREE from 'three';
-// import * as dxt from 'decode-dxt';
-const dxt = require('decode-dxt');
-
-const TPC_TYPE_NO_MIP = 0;
-const TPC_TYPE_GREY = 1;
-const TPC_TYPE_RGB = 2;
-const TPC_TYPE_RGBA = 4;
-const TPC_TYPE_BGRA = 12;
-
-export interface TPCTexture extends THREE.Texture {
-	pixelDepth?: number;
-	extensionString?: string;
-}
+const dxt = require("decode-dxt");
 
 interface TPCHeader {
-	frame_pixels: number;
-	alpha_blending: number;
-	width: number;
-	height: number;
-	image_type: number;
-	mipmap_count: number;
-	compressed: boolean;
-	frame_count: number;
-	txi_offset: number;
-	frame_width: number;
-	frame_height: number;
-	pixel_size: number;
-	txi_value: string;
-	pixel_bytes?: number;
+	frame_pixels?: number;
+	alpha_blending?: number;
+	width?: number;
+	height?: number;
+	image_type?: number;
+	mipmap_count?: number;
 	numX?: number;
 	numY?: number;
-	min_block?: number;
+	compressed?: boolean;
+	pixel_size?: number;
+	cubemap?: boolean;
+	frame_count?: number;
+	frame_width?: number;
+	frame_height?: number;
 	data_size?: number;
+	txi_offset?: number;
+	txi_value?: string;
 }
 
-export class TPCLoader {
-	manager = THREE.DefaultLoadingManager;
+interface TPCRanges {
+	width: number;
+	height: number;
+	start: number;
+	end: number;
+}
+
+interface TPCTexture extends THREE.Texture {
+	pixelDepth?: number;
+	extensionString?: string;
+	alphaBlending?: number;
+}
+
+
+
+// TPC Constants
+const TPC_TYPE_NO_MIP = 0,
+	TPC_TYPE_GREY = 1,
+	TPC_TYPE_RGB = 2,
+	TPC_TYPE_RGBA = 4,
+	TPC_TYPE_BGRA = 12;
+
+// TPC Size Constants
+const SIZE_HEADER = 128;
+
+/*
+
+ * @author ndixUR / https://github.com/ndixUR/
+ * @author mrdoob / http://mrdoob.com/
+ */
+
+export class TPC extends KotorFile {
 	header: TPCHeader;
-	use_dxt: boolean;
+	texture: TPCTexture;
+	arrayBuf: ArrayBuffer;
 
-	constructor() {
-
-		console.log(dxt);
+	constructor(
+		public fileName: string,
+		public fileExtension: string,
+		public buffer: Buffer
+	) {
+		super(fileName, fileExtension, buffer);
 	}
 
-	static toArrayBuffer(buf: Buffer) {
-		const ab = new ArrayBuffer(buf.length);
-		const view = new Uint8Array(ab);
-		for (let i = 0; i < buf.length; ++i) {
+	toArrayBuffer(buf: Buffer) {
+		var ab = new ArrayBuffer(buf.length);
+		var view = new Uint8Array(ab);
+		for (var i = 0; i < buf.length; ++i) {
 			view[i] = buf[i];
 		}
-
 		return ab;
 	}
 
-	load(
-		buffer: Buffer,
-		onLoad: (texture: TPCTexture) => void,
-		onError: (err: any) => void
-	) {
-		const texture: TPCTexture = new THREE.Texture();
+	decompile(): void {
+		const texture: TPCTexture = new Texture();
+
+		// var loader = new THREE.XHRLoader(this.manager);
+		// loader.setResponseType("arraybuffer");
+
 		try {
-			texture.image = this.parse(TPCLoader.toArrayBuffer(buffer));
-		} catch (err ) {
-			if (onError) {
-				onError(err);
-			}
+			const tpcData = this.parse(this.buffer);
+			// store pixel data in unpremultiplied state to prevent damage
+			//texture.mipmaps.push(tpcData.pixelData);
+			texture.mipmaps = texture.mipmaps.concat(tpcData.mipmaps);
+
+			// construct preview canvas
+			var canvas = document.createElement("canvas");
+			canvas.width = tpcData.header.width;
+			canvas.height = tpcData.header.height;
+
+			var context = canvas.getContext("2d");
+			var imageData = context.createImageData(
+				canvas.width,
+				canvas.height
+			);
+			imageData.data.set(tpcData.pixelData);
+			context.putImageData(imageData, 0, 0);
+			texture.image = canvas;
+
+			// record pixel depth
+			texture.pixelDepth = tpcData.pixelDepth;
+
+			texture.extensionString = tpcData.txiValue;
+
+			texture.alphaBlending = tpcData.header.alpha_blending;
+			//texture.image = scope.parse( buffer );
+			//console.log('scope parsed');
+		} catch (err) {
+			console.log(err);
 			return;
 		}
 		if (
 			texture.image &&
 			texture.image.hasAttribute &&
-			texture.image.hasAttribute('pixelDepth')
+			texture.image.hasAttribute("pixelDepth")
 		) {
 			texture.pixelDepth = parseInt(
-				texture.image.getAttribute('pixelDepth'),
-				10
+				texture.image.getAttribute("pixelDepth")
 			);
-			texture.image.removeAttribute('pixelDepth');
+			texture.image.removeAttribute("pixelDepth");
 		}
-		// console.log(texture.image);
+		//console.log(texture.image);
 		if (
 			texture.image &&
 			texture.image.hasAttribute &&
-			texture.image.hasAttribute('txiValue')
+			texture.image.hasAttribute("txiValue")
 		) {
-			texture.extensionString = texture.image.getAttribute('txiValue');
-			texture.image.removeAttribute('txiValue');
+			texture.extensionString = texture.image.getAttribute("txiValue");
+			texture.image.removeAttribute("txiValue");
+		}
+		if (
+			texture.image &&
+			texture.image.hasAttribute &&
+			texture.image.hasAttribute("alphaBlending")
+		) {
+			texture.alphaBlending = texture.image.getAttribute("alphaBlending");
+			texture.image.removeAttribute("alphaBlending");
 		}
 		// texture.sourceFile = url;
 		texture.needsUpdate = true;
-
-		if (onLoad !== undefined) {
-			onLoad(texture);
-		}
-		// },
-		// onProgress,
-		// onError
-		// );
-
-		return texture;
+		this.texture = texture;
 	}
 
-	parse(buffer: ArrayBuffer) {
-		// TPC Constants
-
-
-		if (buffer.byteLength < 128) {
+	/*
+	 * headerRead
+	 *   Read the TPC header, initialize derived data,
+	 *   do non-TXI-based derived header data
+	 */
+	headerRead(buffer: Buffer): TPCHeader {
+		if (buffer.length < SIZE_HEADER) {
 			console.error(
-				'THREE.TPCLoader.parse: Not enough data to contain header.'
+				"THREE.TPCLoader.parse: Not enough data to contain header."
 			);
 		}
 
-		const view = new DataView(buffer);
+		const header: TPCHeader = {};
+		const buf_view = new DataView(this.toArrayBuffer(buffer));
 
-		const content = new Uint8Array(buffer);
+		header.frame_pixels = buf_view.getUint32(0, true);
+		header.alpha_blending = buf_view.getFloat32(4, true);
+		header.width = buf_view.getUint16(8, true);
+		header.height = buf_view.getUint16(10, true);
+		header.image_type = buf_view.getUint8(12);
+		header.mipmap_count = buf_view.getUint8(13);
 
-		this.header = {
-				frame_pixels: view.getUint32(0, true),
-				alpha_blending: view.getFloat32(4, true),
-				width: view.getUint16(8, true),
-				height: view.getUint16(10, true),
-				image_type: content[11],
-				mipmap_count: content[12],
-				compressed: false,
-				frame_count: 1,
-				txi_offset: 0,
-				frame_width: null,
-				frame_height: null,
-				pixel_size: null,
-				txi_value: null
-			};
-		this.header.frame_width = this.header.width;
-		this.header.frame_height = this.header.height;
+		// extra default values
+		header.numX = 1;
+		header.numY = 1;
 
-		// skip header with much reserved padding
-		const offset = 128;
-
-		// Check TPC if it is valid format
-		this.tpcCheckHeader(content, offset, buffer);
-
-		if (offset >= content.length) {
-			console.error('THREE.TPCLoader.parse: No data');
+		// interpret header
+		header.compressed = header.frame_pixels > 0;
+		header.pixel_size = 32;
+		if (header.image_type == TPC_TYPE_RGB) {
+			header.pixel_size = 24;
+		} else if (header.image_type == TPC_TYPE_GREY) {
+			header.pixel_size = 8;
+			header.compressed = false;
 		}
 
-		// Skip the needn't data
-		// offset += header.id_length;
-
-		this.use_dxt = this.header.compressed;
-
-
-
-
-
-		/*
-		 */
-		const canvas = document.createElement('canvas');
-		canvas.width = this.header.width;
-		canvas.height = this.header.height;
-
-		const context = canvas.getContext('2d');
-		const imageData = context.createImageData(this.header.width, this.header.height);
-
-		const result = this.tpcParse(content);
-		const rgbaData = this.getTpcRGBA(
-			imageData.data,
-			result.pixel_data,
-		);
-
-		console.log('img data', imageData);
-		context.putImageData(imageData, 0, 0);
-
-		// tga2tpc CUSTOM:
-		canvas.setAttribute('pixelDepth', `${this.header.pixel_size}`);
-		if (this.header.txi_value && this.header.txi_value.length) {
-			console.log('export txi_value');
-			canvas.setAttribute('txiValue', this.header.txi_value);
-			console.log(canvas.getAttribute('txiValue'));
+		// detect cube map, this is how odyssey does it :(
+		if (header.height == header.width * 6) {
+			header.cubemap = true;
+			header.numX = 1;
+			header.numY = 6;
+			header.frame_count = 6;
+			header.frame_width = header.width;
+			header.frame_height = header.height / 6;
 		}
 
-		return canvas;
-	}
-
-	tpcGetImageData8bits(
-		imageData: Uint8ClampedArray,
-		y_start: number,
-		y_step: number,
-		y_end: number,
-		x_start: number,
-		x_step: number,
-		x_end: number,
-		image: Uint8Array,
-		palettes: Uint8Array
-	) {
-		const colormap = palettes;
-		let color;
-		let i = 0;
-		let x;
-		let y;
-		const width = this.header.width;
-
-		for (y = y_start; y !== y_end; y += y_step) {
-			for (x = x_start; x !== x_end; x += x_step, i++) {
-				color = image[i];
-				imageData[(x + width * y) * 4 + 3] = 255;
-				imageData[(x + width * y) * 4 + 2] =
-					colormap[color * 3 + 0];
-				imageData[(x + width * y) * 4 + 1] =
-					colormap[color * 3 + 1];
-				imageData[(x + width * y) * 4 + 0] =
-					colormap[color * 3 + 2];
-			}
-		}
-
-		return imageData;
-	}
-
-	tpcGetImageData16bits(
-		imageData: Uint8ClampedArray,
-		y_start: number,
-		y_step: number,
-		y_end: number,
-		x_start: number,
-		x_step: number,
-		x_end: number,
-		image: Uint8Array
-	) {
-		let color;
-		let i = 0;
-		let x;
-		let y;
-		const width = this.header.width;
-
-		for (y = y_start; y !== y_end; y += y_step) {
-			for (x = x_start; x !== x_end; x += x_step, i += 2) {
-				// tslint:disable-next-line: no-bitwise
-				color = image[i + 0] + (image[i + 1] << 8); // Inversed ?
-				// tslint:disable-next-line: no-bitwise
-				imageData[(x + width * y) * 4 + 0] = (color & 0x7c00) >> 7;
-				// tslint:disable-next-line: no-bitwise
-				imageData[(x + width * y) * 4 + 1] = (color & 0x03e0) >> 2;
-				// tslint:disable-next-line: no-bitwise
-				imageData[(x + width * y) * 4 + 2] = (color & 0x001f) >> 3;
-				imageData[(x + width * y) * 4 + 3] =
-					// tslint:disable-next-line: no-bitwise
-					color & 0x8000 ? 0 : 255;
-			}
-		}
-
-		return imageData;
-	}
-
-	tpcGetImageData24bits(
-		imageData: Uint8ClampedArray,
-		y_start: number,
-		y_step: number,
-		y_end: number,
-		x_start: number,
-		x_step: number,
-		x_end: number,
-		image: Uint8Array
-	) {
-		let i = 0;
-		let x;
-		let y;
-		const width = this.header.width;
-
-		for (y = y_start; y !== y_end; y += y_step) {
-			for (x = x_start; x !== x_end; x += x_step, i += 3) {
-				imageData[(x + width * y) * 4 + 3] = 255;
-				imageData[(x + width * y) * 4 + 0] = image[i + 0];
-				imageData[(x + width * y) * 4 + 1] = image[i + 1];
-				imageData[(x + width * y) * 4 + 2] = image[i + 2];
-			}
-		}
-
-		return imageData;
-	}
-
-	tpcGetImageData32bitsSwizzle(
-		imageData: Uint8ClampedArray,
-		y_start: number,
-		y_step: number,
-		y_end: number,
-		x_start: number,
-		x_step: number,
-		x_end: number,
-		image: Uint8Array
-	) {
-		let i = 0;
-		let x;
-		let y;
-		const width = this.header.frame_width;
-
-		console.log('read 32 bit ', y_start, y_end, x_start, x_end);
-		for (y = y_start; y !== y_end; y += y_step) {
-			for (x = x_start; x !== x_end; x += x_step, i += 4) {
-				imageData[(x + width * y) * 4 + 2] = image[i + 0];
-				imageData[(x + width * y) * 4 + 1] = image[i + 1];
-				imageData[(x + width * y) * 4 + 0] = image[i + 2];
-				imageData[(x + width * y) * 4 + 3] = image[i + 3];
-			}
-		}
-
-		return imageData;
-	}
-
-	tpcGetImageData32bits(
-		imageData: Uint8ClampedArray,
-		y_start: number,
-		y_step: number,
-		y_end: number,
-		x_start: number,
-		x_step: number,
-		x_end: number,
-		image: Uint8Array
-	) {
-		let i = 0;
-		let x;
-		let y;
-		const width = this.header.frame_width;
-
-		console.log('read 32 bit ', y_start, y_end, x_start, x_end);
-		for (y = y_start; y !== y_end; y += y_step) {
-			for (x = x_start; x !== x_end; x += x_step, i += 4) {
-				imageData[(x + width * y) * 4 + 0] = image[i + 0];
-				imageData[(x + width * y) * 4 + 1] = image[i + 1];
-				imageData[(x + width * y) * 4 + 2] = image[i + 2];
-				imageData[(x + width * y) * 4 + 3] = image[i + 3];
-			}
-		}
-
-		return imageData;
-	}
-
-	tpcGetImageDataDXT24bits(
-		imageData: Uint8ClampedArray,
-		y_start: number,
-		y_step: number,
-		y_end: number,
-		x_start: number,
-		x_step: number,
-		x_end: number,
-		img: Uint8Array
-	) {
-		const image = dxt(
-			new DataView(img.buffer, img.byteOffset, img.byteLength),
-			this.header.frame_width,
-			this.header.frame_height,
-			dxt.dxt1
-		);
-
-
-		let i = 0;
-		let x;
-		let y;
-		const width = this.header.width;
-
-		for (y = y_start; y !== y_end; y += y_step) {
-			for (x = x_start; x !== x_end; x += x_step, i += 4) {
-				imageData[(x + width * y) * 4 + 0] = image[i + 0];
-				imageData[(x + width * y) * 4 + 1] = image[i + 1];
-				imageData[(x + width * y) * 4 + 2] = image[i + 2];
-				imageData[(x + width * y) * 4 + 3] = image[i + 3];
-			}
-		}
-
-		return imageData;
-	}
-
-	tpcGetImageDataDXT32bits(
-		imageData: Uint8ClampedArray,
-		y_start: number,
-		y_step: number,
-		y_end: number,
-		x_start: number,
-		x_step: number,
-		x_end: number,
-		img: Uint8Array
-	) {
-		const image = dxt(
-			new DataView(img.buffer, img.byteOffset, img.byteLength),
-			this.header.frame_width,
-			this.header.frame_height,
-			dxt.dxt5
-		);
-
-		let i = 0;
-		let x;
-		let y;
-		const width = this.header.width;
-
-		for (y = y_start; y !== y_end; y += y_step) {
-			for (x = x_start; x !== x_end; x += x_step, i += 4) {
-				imageData[(x + width * y) * 4 + 0] = image[i + 0];
-				imageData[(x + width * y) * 4 + 1] = image[i + 1];
-				imageData[(x + width * y) * 4 + 2] = image[i + 2];
-				imageData[(x + width * y) * 4 + 3] = image[i + 3];
-			}
-		}
-
-		return imageData;
-	}
-
-	getTpcRGBA(data: Uint8ClampedArray, image: Uint8Array) {
-		let x_start;
-		let y_start;
-		let x_step;
-		let y_step;
-		let x_end;
-		let y_end;
-
-		// this is frame_size total w/ mipmap data, but that is already pruned from image
-		// const frame_size = header.data_size / header.frame_count;
-		const frame_size =
-			this.header.frame_width * this.header.frame_height * this.header.pixel_bytes;
-
-		for (
-			let frame_number = 0;
-			frame_number < this.header.frame_count;
-			frame_number++
-		) {
-			// for (let frame_number = 1; frame_number < Math.min(header.frame_count, 2); frame_number++) {
-			// give image data methods frame width/height, but pixel ranges for their image, envelope of image data appropriate
-			let frame_rows = 0;
-			let frame_cols = 0;
-			if (frame_number >= this.header.numX) {
-				frame_rows = frame_number / this.header.numX;
-			}
-			if (frame_number - frame_rows * this.header.numX >= 0) {
-				frame_cols = frame_number - frame_rows * this.header.numX;
-			}
-			const pixel_data_offset = frame_number * frame_size;
-			// BL - opengl-friendly
-			// x_start = 0;
-			x_start = frame_cols * this.header.frame_width;
-			x_step = 1;
-			// x_end = width;
-			x_end = x_start + this.header.frame_width;
-			// y_start = height - 1;
-			y_start = (frame_rows + 1) * this.header.frame_height - 1;
-			y_step = -1;
-			// y_end = - 1;
-			y_end = frame_rows * this.header.frame_height - 1;
-
-			console.log(
-				`frame ${frame_number}: x ${x_start}-${x_end} y ${y_start}-${y_end} ` +
-					`data ${pixel_data_offset}-${pixel_data_offset +
-						frame_size}`
-			);
-
-			const frame_pixels = image.subarray(
-				pixel_data_offset,
-				pixel_data_offset + frame_size + 1
-			);
-
-			if (this.use_dxt) {
-				switch (this.header.pixel_size) {
-					case 24:
-						this.tpcGetImageDataDXT24bits(
-							data,
-							y_start,
-							y_step,
-							y_end,
-							x_start,
-							x_step,
-							x_end,
-							frame_pixels
-							// image.subarray(pixel_data_offset, pixel_data_offset + frame_size + 1)
-						);
-						break;
-					case 32:
-						this.tpcGetImageDataDXT32bits(
-							data,
-							y_start,
-							y_step,
-							y_end,
-							x_start,
-							x_step,
-							x_end,
-							frame_pixels
-							// image.subarray(pixel_data_offset, pixel_data_offset + frame_size + 1)
-						);
-						break;
-					default:
-						console.error(
-							'THREE.TPCLoader.parse.getTpcRGBA: not support this format',
-						);
-						break;
-				}
-			} else {
-				switch (this.header.pixel_size) {
-					case 8:
-						this.tpcGetImageData8bits(
-							data,
-							y_start,
-							y_step,
-							y_end,
-							x_start,
-							x_step,
-							x_end,
-							frame_pixels,
-							frame_pixels
-						);
-						break;
-
-					case 16:
-						this.tpcGetImageData16bits(
-							data,
-							y_start,
-							y_step,
-							y_end,
-							x_start,
-							x_step,
-							x_end,
-							frame_pixels
-						);
-						break;
-
-					case 24:
-						this.tpcGetImageData24bits(
-							data,
-							y_start,
-							y_step,
-							y_end,
-							x_start,
-							x_step,
-							x_end,
-							frame_pixels
-						);
-						break;
-
-					case 32:
-						if (this.header.image_type === TPC_TYPE_BGRA) {
-							this.tpcGetImageData32bitsSwizzle(
-								data,
-								y_start,
-								y_step,
-								y_end,
-								x_start,
-								x_step,
-								x_end,
-								frame_pixels
-							);
-						} else {
-							this.tpcGetImageData32bits(
-								data,
-								y_start,
-								y_step,
-								y_end,
-								x_start,
-								x_step,
-								x_end,
-								frame_pixels
-							);
-						}
-						break;
-
-					default:
-						console.error(
-							'THREE.TPCLoader.parse.getTpcRGBA: not support this format'
-						);
-						break;
-				}
-			}
-		}
-
-		// Load image data according to specific method
-		// var func = 'tpcGetImageData' + (use_grey ? 'Grey' : '') + (header.pixel_size) + 'bits';
-		// func(data, y_start, y_step, y_end, x_start, x_step, x_end, width, image, palette );
-		return data;
-	}
-
-	// Parse TPC image buffer
-	tpcParse(data: Uint8Array) {
-		let pixel_data;
-		let pixel_size;
-		let frame_size;
-		let total_size;
-
-		// pixel_size = header.pixel_size >> 3;
-		pixel_size = this.header.pixel_bytes;
-		frame_size = this.header.frame_width * this.header.frame_height * pixel_size;
-		total_size = frame_size * this.header.frame_count;
-		if (this.header.compressed) {
-			// total_size = header.data_size;
-			console.log(`pixel total ${total_size}`);
-			console.log(`frame pix ${this.header.frame_pixels}`);
-		}
-
-		console.log('raw');
-		// RAW Pixels
-		// slice makes a copy, not what I want, but this actually works...
-		let pd_offset = 0;
-		let offset = 128;
-		pixel_data = new Uint8Array(total_size);
-
-		for (let i = 0; i < this.header.frame_count; i++) {
-			// pixel_data.set(data.slice(offset, offset += frame_size), pd_offset);
-			const temp =
-				this.pixelsForMipmaps(
-					this.header.frame_width / 2,
-					this.header.frame_height / 2,
-					this.header.min_block
-				) * this.header.pixel_bytes;
-			console.log(
-				`set pixel data @${pd_offset} w/ original range ${offset}-${offset +
-					frame_size}, skip ${temp} to ${offset +
-					frame_size +
-					temp}`
-			);
-			pixel_data.set(
-				data.subarray(offset, (offset += frame_size)),
-				pd_offset
-			);
-			pd_offset += frame_size;
-			offset +=
-				this.pixelsForMipmaps(
-					this.header.frame_width / 2,
-					this.header.frame_height / 2,
-					this.header.min_block
-				) * this.header.pixel_bytes;
-		}
-		console.log(offset);
-		console.log(pixel_data);
-
-		return {
-			pixel_data
-			// palettes: palettes
-		};
-	}
-
-	tpcCheckHeader(content: Uint8Array, offset: number, buffer: ArrayBuffer) {
-		switch (this.header.image_type) {
-			// What the need of a file without data ?
-			case TPC_TYPE_NO_MIP:
-				// console.error( 'THREE.TPCLoader.parse.tpcCheckHeader: No data' );
-				this.header.pixel_size = 24;
-				this.header.pixel_bytes = 3;
-				break;
-			case TPC_TYPE_GREY:
-				this.header.pixel_size = 8;
-				this.header.pixel_bytes = 1;
-				break;
-			case TPC_TYPE_RGB:
-				this.header.pixel_size = 24;
-				this.header.pixel_bytes = 3;
-				break;
-			case TPC_TYPE_RGBA:
-				this.header.pixel_size = 32;
-				this.header.pixel_bytes = 4;
-				break;
-			case TPC_TYPE_BGRA:
-				this.header.pixel_size = 32;
-				this.header.pixel_bytes = 4;
-				break;
-
-			// Invalid type ?
-			default:
-				console.error(`THREE.TPCLoader.parse.tpcCheckHeader: Invalid type "${this.header.image_type}"`);
-		}
-
-		// Check image width and height
-		if (this.header.width <= 0 || this.header.height <= 0) {
-			console.error(
-				'THREE.TPCLoader.parse.tpcCheckHeader: Invalid image size'
+		// determine data size
+		header.data_size = header.frame_pixels;
+		if (!header.compressed) {
+			// compute uncompressed data size
+			header.data_size = this.uncompressedDataSize(header);
+		} else if (header.cubemap && header.mipmap_count > 1) {
+			header.data_size =
+				this.dataSize(
+					header,
+					header.frame_width,
+					header.frame_height,
+					true,
+					header.mipmap_count
+				) * header.frame_count;
+		} else if (header.mipmap_count > 1) {
+			// compute compressed data size w/ all mipmaps
+			header.data_size = this.dataSize(
+				header,
+				header.width,
+				header.height,
+				true,
+				header.mipmap_count
 			);
 		}
 
-		const expected_mipmaps = Math.log(this.header.width) / Math.log(2);
+		return header;
+	}
 
-		if (this.header.frame_pixels === 0) {
-			// uncompressed data
-			this.header.compressed = false;
+	/*
+	 * uncompressedDataSize
+	 *   Compute expected size of uncompressed data using header data:
+	 *   width, height, and mipmap_count
+	 */
+	uncompressedDataSize(header: TPCHeader) {
+		let size = 0;
+		let w = header.width;
+		let h = header.height;
+		// uncompressed 32-bit
+		let pixel_bytes = 4;
+		if (header.image_type == TPC_TYPE_RGB) {
+			// uncompressed 24-bit
+			pixel_bytes = 3;
+		} else if (header.image_type == TPC_TYPE_GREY) {
+			// uncompressed 8-bit
+			pixel_bytes = 1;
+		}
+		for (let i = 0; i < header.mipmap_count; i++) {
+			size += w * h * pixel_bytes;
+			w = Math.max(w / 2, 1);
+			h = Math.max(h / 2, 1);
+		}
+		return size;
+	}
 
-			// compute number of pixels
-			let mw = this.header.width;
-			let mh = this.header.height;
-			this.header.data_size = 0;
-			this.header.mipmap_count = 0;
-			do {
-				this.header.data_size += mw * mh;
-				mw = Math.floor(mw / 2);
-				mh = Math.floor(mh / 2);
-				this.header.mipmap_count += 1;
-			} while (mw && mh);
-			// header.data_size = (((header.width * header.height) * 2) - 1);
-			// console.log(header.image_type);
-			// console.log(TPC_TYPE_RGB);
-			// header.data_size *= header.pixel_size >> 3;
-			let image_data_size = content.length - offset;
-			if (this.header.width < 8 && this.header.height < 8) {
-				// finding TXI & data-fitting, especially mipmaps vs no mipmaps,
-				// become very ambiguous at small sizes,
-				// so, for very small textures, we read ascii chars from the end
-				// of the file to get TXI length & offset, then use that in our
-				// data fit process
-				// XXX predictive is a misnomer here
-				this.txiReadPredictive(buffer);
-				if (this.header.txi_value && this.header.txi_value.length) {
-					image_data_size -= this.header.txi_value.length;
-				}
-			}
-			// pixel size/image type are garbage, fit data to determine pixel format
-			for (const test_bytes of [4, 3, 1]) {
-				console.log(
-					test_bytes,
-					content.length,
-					offset + this.header.data_size * test_bytes
-				);
-				if (
-					image_data_size >= this.header.data_size * test_bytes || // header.image_type == TPC_TYPE_NO_MIP &&
-					image_data_size >=
-						this.header.width * this.header.height * test_bytes
-				) {
-					console.log(`found actual bytes = ${test_bytes}`);
-					// this is the actual bitness
-					switch (test_bytes) {
-						case 4:
-							// 32-bit
-							this.header.pixel_size = 32;
-							this.header.pixel_bytes = 4;
-							this.header.image_type = TPC_TYPE_RGBA;
-							break;
-						case 3:
-							// 24-bit
-							this.header.pixel_size = 24;
-							this.header.pixel_bytes = 3;
-							this.header.image_type = TPC_TYPE_RGB;
-							break;
-						case 1:
-							// 8-bit
-							this.header.pixel_size = 8;
-							this.header.pixel_bytes = 1;
-							this.header.image_type = TPC_TYPE_GREY;
-							break;
-					}
-					if (
-						this.header.image_type === TPC_TYPE_NO_MIP ||
-						image_data_size <= this.header.data_size * test_bytes
-					) {
-						this.header.image_type = TPC_TYPE_NO_MIP;
-						this.header.mipmap_count = 0;
-						this.header.data_size = this.header.width * this.header.height;
-					}
-					break;
-				}
-			}
-			// header.data_size *= header.pixel_size >> 3;
-			this.header.data_size *= this.header.pixel_bytes;
-
-			// read TXI file
-			if (!this.header.txi_offset) {
-				this.header.txi_offset = offset + this.header.data_size;
-				if (this.header.txi_offset < content.length) {
-					this.txiRead(buffer);
-					// console.log(header);
-					// normal maps are BGRA
-					if (
-						this.header.txi_value &&
-						this.header.txi_value.length &&
-						this.header.txi_value.match(/^\s*isbumpmap\s+1/im)
-					) {
-						// console.log('bumpmap detected');
-						// header.image_type = TPC_TYPE_BGRA;
-					}
-				}
-			}
+	/*
+	 * dataSize
+	 *   Compute expected size of w by h image data using compression
+	 *   specified in header
+	 *   mipmap - whether to include lower detail levels in total
+	 *   detail_levels - maximum number of additional detail levels to include
+	 */
+	dataSize(
+		header: TPCHeader,
+		w: number,
+		h: number,
+		mipmap = true,
+		detail_levels: number = null
+	) {
+		let size = 0;
+		// DXT5 or Uncompressed 32-bit
+		let pixel_bytes = header.compressed ? 1 : 4;
+		let min_block = header.compressed ? 16 : 0;
+		if (header.image_type == TPC_TYPE_RGB) {
+			// DXT1 or Uncompressed 24-bit
+			pixel_bytes = header.compressed ? 0.5 : 3;
+			min_block = header.compressed ? 8 : 0;
+		} else if (header.image_type == TPC_TYPE_GREY) {
+			// Uncompressed 8-bit
+			pixel_bytes = 1;
+		}
+		if (header.compressed && (w % 4 || h % 4)) {
+			// DXT 4x4 blocks are not going to evenly distribute here,
+			// need to do the harder size calculation
+			size += Math.max(
+				min_block,
+				Math.trunc((w + 3) / 4) * Math.trunc((h + 3) / 4) * min_block
+			);
 		} else {
-			// DXT compressed data
-			this.header.compressed = true;
-
-			// special cases
-			if (this.header.width * this.header.height === this.header.frame_pixels) {
-				// single frame
-			} else if (
-				this.header.width * this.header.width === this.header.frame_pixels &&
-				this.header.height > this.header.width
-			) {
-				// cubemap?
-				this.header.frame_count = this.header.height / this.header.width;
-				this.header.numX = 1;
-				this.header.numY = 6;
-				this.header.frame_height = this.header.frame_width;
-			} else if (
-				this.header.width * this.header.height >= this.header.frame_pixels &&
-				this.header.mipmap_count < expected_mipmaps
-			) {
-				console.log('ANIMATED PROCESSING');
-				// animated texture, priority is reading the TXI so you know the layout
-				this.header.txi_offset = offset + this.header.frame_pixels;
-				this.txiRead(buffer);
-				if (this.header.txi_value) {
-					let matches;
-					if (
-						(matches = this.header.txi_value.match(
-							/^\s*numx\s+(\d+)/im
-						))
-					) {
-						this.header.numX = parseInt(matches[1], 10);
-					} else if (
-						(matches = this.header.txi_value.match(
-							/^\s*defaultwidth\s+(\d+)/im
-						))
-					) {
-						this.header.numX = this.header.width / parseInt(matches[1], 10);
-					}
-					if (
-						(matches = this.header.txi_value.match(
-							/^\s*numy\s+(\d+)/im
-						))
-					) {
-						this.header.numY = parseInt(matches[1], 10);
-					} else if (
-						(matches = this.header.txi_value.match(
-							/^\s*defaultheight\s+(\d+)/im
-						))
-					) {
-						this.header.numY = this.header.height / parseInt(matches[1], 10);
-					}
-					if (this.header.numX && this.header.numY) {
-						this.header.frame_width = this.header.width / this.header.numX;
-						this.header.frame_height = this.header.height / this.header.numY;
-						this.header.frame_count = this.header.numX * this.header.numY;
-					} else {
-						console.log('NOT ANIMATED');
-						// speculative txi read likely failed, let it be attempted later
-						delete this.header.txi_offset;
-						delete this.header.txi_value;
-					}
-				} else {
-					console.log('NOT ANIMATED');
-					this.header.txi_offset = 0;
-				}
-			}
-
-			if (this.header.image_type === TPC_TYPE_NO_MIP) {
-				// image_type == 0 is maybe sometimes associated with textures that
-				// have no mipmaps, if anything ... image_type is very unreliable
-				this.header.mipmap_count = 0;
-			}
-
-			// fit data to determine image_type,
-			// recorded image type number is routinely garbage
-			let test_size = 0;
-			test_size =
-				this.pixelsForMipmaps(
-					this.header.frame_width,
-					this.header.frame_height,
-					16
-				) *
-				this.header.frame_count *
-				1;
-			console.log(`dxt5 ${test_size} ${this.header.frame_pixels}`);
-			if (
-				test_size === this.header.frame_pixels - offset ||
-				test_size === this.header.frame_pixels ||
-				this.header.frame_pixels === this.header.width * this.header.height ||
-				content.length >= test_size + offset
-			) {
-				console.log('FIT RGBA/DXT5');
-				this.header.image_type = TPC_TYPE_RGBA;
-				this.header.mipmap_count = 1;
-			} else if (
-				test_size * 0.5 === this.header.frame_pixels - offset ||
-				test_size * 0.5 === this.header.frame_pixels ||
-				this.header.frame_pixels ===
-				this.header.width * this.header.height * 0.5 ||
-				content.length >= test_size * 0.5 + offset
-			) {
-				console.log('FIT RGB/DXT1');
-				this.header.image_type = TPC_TYPE_RGB;
-				this.header.mipmap_count = 1;
-			}
-			/*
-	test_size = pixelsForMipmaps(
-	  //header.frame_width, header.frame_height, 8
-	  header.frame_width, header.frame_height, 16
-	) * header.frame_count * 0.5;
-	console.log(`dxt1 ${test_size} ${header.frame_pixels}`);
-	if (test_size === header.frame_pixels - offset ||
-		test_size === header.frame_pixels ||
-		header.frame_pixels === header.width * header.height * 0.5 ||
-		content.length >= test_size + offset) {
-	  console.log('FIT RGB/DXT1');
-	  header.image_type = TPC_TYPE_RGB;
-	  header.mipmap_count = 1;
-	}
-	*/
-
-			// set some info about bit-depth and sizes
-			this.header.min_block = 0;
-			switch (this.header.image_type) {
-				case TPC_TYPE_GREY:
-				// not convinced this exists...
-				case TPC_TYPE_RGB:
-					this.header.pixel_size = 24;
-					this.header.pixel_bytes = 0.5;
-					// XXX we have to set min_block to 16 here instead of 8,
-					// it is basically working around a bug in how we are
-					// gettting the number of 'pixels' via pixelsForMipmaps,
-					// the issue is that the DXT numbers include the bit-depth,
-					// but the uncompressed numbers do not, it happens to work
-					// for DXT5 because pixel_bytes == 1,
-					// for DXT1 pixel_bytes == 0.5,
-					// so we are doubling the minimum blocksize until we fix it
-					// header.min_block = 8;
-					this.header.min_block = 16;
-					break;
-				case TPC_TYPE_RGBA:
-					this.header.pixel_size = 32;
-					this.header.pixel_bytes = 1;
-					this.header.min_block = 16;
-					break;
-			}
-			this.header.data_size = this.pixelsForMipmaps(
-				this.header.frame_width,
-				this.header.frame_height,
-				this.header.min_block
-			);
-			this.header.data_size *= this.header.frame_count;
-			this.header.data_size *= this.header.pixel_bytes;
-			console.log(
-				`DATA SIZE ${this.header.data_size} ${this.header.width} ${this.header.height}`
-			);
-
-			// read TXI if it did not happen yet
-			if (!this.header.txi_value) {
-				this.header.txi_offset = offset + this.header.data_size;
-				this.txiRead(buffer);
-			}
+			size += Math.max(min_block, w * h * pixel_bytes);
 		}
-		// console.log(header);
+		//console.log(size, min_block, w, h, pixel_bytes);
+		w = Math.floor(w / 2);
+		h = Math.floor(h / 2);
+		if (
+			mipmap &&
+			(w > 0 || h > 0) &&
+			(detail_levels === null || detail_levels-- > 1)
+		) {
+			// recurse for lower detail levels
+			size += this.dataSize(
+				header,
+				w || 1,
+				h || 1,
+				mipmap,
+				detail_levels
+			);
+		}
+		//console.log(`total size ${size}`);
+		return size;
 	}
 
-	// Read TXI value from buffer by reading from known offset to EOF
-	txiRead(buffer: ArrayBuffer) {
-		console.log(this.header.txi_offset);
-		console.log(buffer.slice(this.header.txi_offset));
-		console.log(buffer.byteLength);
-		if (this.header.txi_offset && this.header.txi_offset < buffer.byteLength) {
-			this.header.txi_value = this.abuf2str(buffer.slice(this.header.txi_offset));
-			// non-printing, non-ascii characters, match any
-			const ascii_test = /[^ -~\t\n\r]+/im;
-			if (ascii_test.test(this.header.txi_value)) {
-				// invalid TXI, should not really happen, but does.
-				delete this.header.txi_value;
-			}
+	/*
+	 * txiGetOffset
+	 *   Compute likely position of TXI information at the end of TPC file,
+	 *   and apply a couple guard-rails for bad TXI locations
+	 */
+	txiGetOffset(header: TPCHeader, content: Uint8Array) {
+		let data_size = header.data_size;
+		//frame_pixels;
+		header.txi_offset = data_size + SIZE_HEADER;
+		console.log(`${header.txi_offset} ${content.byteLength}`);
+		if (
+			header.txi_offset >= content.byteLength ||
+			this.dataSize(header, header.width, header.height) + SIZE_HEADER ==
+				content.byteLength
+		) {
+			// offset past the end, or,
+			// predicted data size matches exact file size,
+			// probably no TXI
+			header.txi_offset = 0;
 		}
 	}
-	// Read TXI value from buffer by reading from end forward, testing for ASCII
-	txiReadPredictive(buffer: ArrayBuffer) {
-		// console.log(header.txi_offset);
-		// console.log(buffer.slice(header.txi_offset));
-		console.log(buffer.byteLength);
+
+	/*
+	 * abuf2str
+	 *   ArrayBuffer to String helper function that behaves on MS platform
+	 */
+	abuf2str(buf: Buffer) {
+		//console.log('fucking windows abuf2str');
+		//console.log(buf);
+		let str = "";
+		const strbuf = new Uint8Array(buf);
+		for (let i of strbuf) {
+			//try { str += String.fromCharCode(i); }
+			try {
+				str += String.fromCodePoint(i);
+			} catch (err) {
+				console.log(err);
+				break;
+			}
+		}
+		console.log(str);
+		return str;
+		//return String.fromCodePoint.apply(null, new Uint8Array(buf));
+		//return String.fromCharCode.apply(null, new Uint8Array(buf));
+	}
+
+	/*
+	 * txiReadPredictive
+	 *   Read TXI value starting from last character and expanding down into
+	 *   buffer until non-ascii characters are encountered
+	 *   The last resort TXI reading mechanism
+	 */
+	txiReadPredictive(header: TPCHeader, buffer: Buffer) {
+		//console.log(header.txi_offset);
+		//console.log(buffer.slice(header.txi_offset));
+		//console.log(buffer.byteLength);
 		let nonascii = false;
-		// let ascii_test = /^[ -~\t\n\r]+$/mi;
+		//let ascii_test = /^[ -~\t\n\r]+$/mi;
 		let txi_offset = buffer.byteLength - 1;
 		while (!nonascii && txi_offset) {
-			// console.log(buffer.slice(txi_offset));
-			const test_str = this.abuf2str(buffer.slice(txi_offset));
-			// console.log(test_str);
-			// console.log(test_str.length);
-			// console.log(test_str.charCodeAt(0));
+			//console.log(buffer.slice(txi_offset));
+			let test_str = this.abuf2str(buffer.slice(txi_offset));
+			//console.log(test_str);
+			//console.log(test_str.length);
+			//console.log(test_str.charCodeAt(0));
 			// non-printing, non-ascii characters, match any
-			const ascii_test = /[^ -~\t\n\r]+/im;
-			// console.log(ascii_test.test(test_str));
+			let ascii_test = /[^ -~\t\n\r]+/im;
+			//console.log(ascii_test.test(test_str));
 			if (ascii_test.test(test_str)) {
 				nonascii = true;
 			} else {
-				this.header.txi_value = test_str;
-				this.header.txi_offset = txi_offset;
+				header.txi_value = test_str;
+				header.txi_offset = txi_offset;
 				txi_offset -= 1;
 			}
 		}
 		console.log(
-			`predictive result: offset: ${this.header.txi_offset} value: ${this.header.txi_value}`
+			`predictive result: ` +
+				`offset: ${header.txi_offset} value: ${header.txi_value}`
 		);
 	}
 
-	// Get number of pixels for an image of width x height plus all mipmaps
-	pixelsForMipmaps(width: number, height: number, min_block: number = 0) {
-		// console.log(`pixelsForMipmaps ${width} ${height} ${min_block}`);
-
-		let num_pix = 0;
-		let w = width;
-		let h = height;
-
-		do {
-			num_pix += Math.max(width * height, min_block);
-			// console.log(`pixelsForMipmaps ${width} ${height} ${num_pix}`);
-			w = Math.floor(w / 2);
-			h = Math.floor(h / 2);
-			if (!this.header.mipmap_count) {
-				console.log('no mipmap mode');
-				w = 0;
-				h = 0;
+	/*
+	 * txiRead
+	 *   Read TXI value starting from known offset and proceeding until EOF
+	 *   The first attempt TXI reading mechanism
+	 */
+	txiRead(header: TPCHeader, buffer: Buffer) {
+		//console.log(buffer.slice(header.txi_offset));
+		//console.log(buffer.byteLength);
+		if (header.txi_offset && header.txi_offset < buffer.byteLength) {
+			console.log(`read TXI @${header.txi_offset}b`);
+			//console.log('do abuf2str');
+			header.txi_value = this.abuf2str(buffer.slice(header.txi_offset));
+			//console.log('abuf2str happened');
+			// non-printing, non-ascii characters, match any
+			let ascii_test = /[^ -~\t\n\r]+/im;
+			if (ascii_test.test(header.txi_value)) {
+				// invalid TXI, should not really happen.
+				console.log(
+					`deleted invalid TXI data: ${header.txi_value.length} bytes`
+				);
+				delete header.txi_value;
+				// attempt to get TXI data by reading from EOF to first non-ascii char
+				this.txiReadPredictive(header, buffer);
 			}
-		} while (w && h);
-		// console.log(` == ${num_pix}`);
-		return num_pix;
+		}
+		//console.log('return txiRead');
 	}
 
-	// ArrayBuffer to String
-	abuf2str(buf: ArrayBuffer) {
-		return String.fromCodePoint.apply(null, new Uint8Array(buf));
-		return String.fromCharCode.apply(null, new Uint8Array(buf));
+	/*
+	 * txiParse
+	 *   Parse the TXI value stored in header, adjusting header as needed
+	 */
+	txiParse(header: TPCHeader) {
+		if (!header.txi_value || !header.txi_value.length) {
+			return;
+		}
+		let matches;
+		if ((matches = header.txi_value.match(/^\s*cube\s+([1TtYy])/im))) {
+			// this was already determined by the 1:6 ratio in headerRead
+			header.cubemap = true;
+			header.numX = 1;
+			header.numY = 6;
+		}
+		if (header.txi_value.match(/^\s*proceduretype\s+cycle/im)) {
+			// TPC contains animated texture frames, determine frame size & layout
+			if ((matches = header.txi_value.match(/^\s*numx\s+(\d+)/im))) {
+				header.numX = parseInt(matches[1]);
+			} else if (
+				(matches = header.txi_value.match(/^\s*defaultwidth\s+(\d+)/im))
+			) {
+				header.numX = header.width / parseInt(matches[1]);
+			}
+			if ((matches = header.txi_value.match(/^\s*numy\s+(\d+)/im))) {
+				header.numY = parseInt(matches[1]);
+			} else if (
+				(matches = header.txi_value.match(
+					/^\s*defaultheight\s+(\d+)/im
+				))
+			) {
+				header.numY = header.height / parseInt(matches[1]);
+			}
+		}
+		/* PLC_FrcDist01 - waterwidth/height aren't multiple frame
+		if (header.txi_value.match(/^\s*proceduretype\s+water/im)) {
+		  if (matches = header.txi_value.match(/^\s*waterwidth\s+(\d+)/im)) {
+			header.numX = header.width / parseInt(matches[1]);
+		  }
+		  if (matches = header.txi_value.match(/^\s*waterheight\s+(\d+)/im)) {
+			header.numY = header.height / parseInt(matches[1]);
+		  }
+		}
+		*/
+	}
+
+	/*
+	 * headerFinalize
+	 *   Finalize the header, maybe using parsed TXI information to determine
+	 *   correct frame count, size, and layout
+	 */
+	headerFinalize(header: TPCHeader) {
+		// adjust frame dimensions for multi-frame textures
+		header.frame_width = header.width;
+		header.frame_height = header.height;
+		header.frame_count = 1;
+		if (header.numX || header.numY) {
+			header.numX = header.numX || 1;
+			header.numY = header.numY || 1;
+			header.frame_width = Math.floor(header.width / header.numX);
+			header.frame_height = Math.floor(header.height / header.numY);
+			header.frame_count = header.numX * header.numY;
+		}
+		console.log(header);
+	}
+
+	/*
+	 * createRanges
+	 *   Generate a structure containing width, height, and byte ranges,
+	 *   for each frame and detail level
+	 *   Returned structure used to read image data from file buffer
+	 */
+	createRanges(header: TPCHeader) {
+		const ranges: TPCRanges[][] = [];
+		let w = header.frame_width,
+			h = header.frame_height;
+		// dsize is size of data for a full frame, all detail levels
+		let dsize = this.dataSize(header, w, h);
+		let mips = header.mipmap_count;
+		if (mips == 1 && header.frame_count > 1) {
+			// use calculated number of mipmaps if multi-frame texture has count = 1,
+			// retain mips == 1 for single-frame, as this is how mipmap 0 textures are
+			mips = Math.log(Math.max(w, h)) / Math.log(2) + 1;
+		}
+		for (let frame_idx = 0; frame_idx < header.frame_count; frame_idx++) {
+			let start = frame_idx * dsize;
+			let mw = w,
+				mh = h;
+			ranges[frame_idx] = [];
+			for (let mip_idx = 0; mip_idx < mips; mip_idx++) {
+				// for end, add size of data for this detail level to start
+				const end = start + this.dataSize(header, mw, mh, false);
+				ranges[frame_idx][mip_idx] = {
+					width: mw,
+					height: mh,
+					start: start,
+					end: end
+				};
+				// advance start and update detail level width & height
+				start = end;
+				mw = Math.max(mw / 2, 1);
+				mh = Math.max(mh / 2, 1);
+			}
+		}
+		console.log(ranges);
+		return ranges;
+	}
+
+	/*
+	 * originBLtoUL
+	 *   Invert rows to go from OpenGL style bottom-left origin to
+	 *   the standard in other contexts, upper-left origin
+	 *   The function is just a flip vertical, nothing special
+	 */
+	originBLtoUL(data: Uint8Array, dim: TPCRanges) {
+		const row_size = dim.width * 4;
+		const row_buffer = new Uint8ClampedArray(row_size);
+		for (let src_y = 0; src_y < dim.height / 2; src_y++) {
+			// swapping row y w/ row h - y
+			const tgt_y = dim.height - 1 - src_y;
+			if (tgt_y == src_y) {
+				break;
+			}
+			const tgt_offset = tgt_y * row_size;
+			const src_offset = src_y * row_size;
+			/*
+		  console.log(
+			`${row_size} ${src_y} <=> ${tgt_y} ` +
+			`${src_offset} ${src_offset + row_size} - ${tgt_offset} ${tgt_offset + row_size}`
+		  );
+		  */
+			row_buffer.set(data.subarray(tgt_offset, tgt_offset + row_size));
+			data.set(
+				data.subarray(src_offset, src_offset + row_size),
+				tgt_offset
+			);
+			data.set(row_buffer, src_offset);
+		}
+		return data;
+	}
+
+	/*
+	 * tpcGetImageData
+	 *   Entrypoint into retrieving image data from a full byte array,
+	 *   requires the frame dimensions also in order to function
+	 */
+	tpcGetImageData(header: TPCHeader, data: Uint8Array, dim: TPCRanges) {
+		console.log(
+			`read ${dim.width}x${dim.height} ${data.byteLength}b @${data.byteOffset}`
+		);
+		// read the image data and vertical flip (reorient) the result
+		return this.originBLtoUL(
+			header.compressed
+				? this.tpcGetImageDataDXT(header, data, dim)
+				: this.tpcGetImageDataRaw(header, data, dim),
+			dim
+		);
+	}
+
+	/*
+	 * tpcGetImageDataDXT
+	 *   Get DXT compressed image data from the provided byte array using
+	 *   dimensions provided in `dim`
+	 */
+	tpcGetImageDataDXT(header: TPCHeader, data: Uint8Array, dim: TPCRanges) {
+		const algo = header.image_type == TPC_TYPE_RGBA ? dxt.dxt5 : dxt.dxt1;
+		//if (dim.width < 4 || dim.height < 4) {
+		//  console.log(data);
+		//}
+		const image = dxt(
+			new DataView(data.buffer, data.byteOffset, data.byteLength),
+			dim.width,
+			dim.height,
+			algo
+		);
+
+		// image is typed array of bytes
+		//console.log(image);
+		return image;
+	}
+
+	/*
+	 * tpcGetImageDataRaw
+	 *   Get raw pixel image data from the provided byte array using
+	 *   dimensions provided in `dim`
+	 */
+	tpcGetImageDataRaw(header: TPCHeader, data: Uint8Array, dim: TPCRanges) {
+		// prepare RGBA byte array for output
+		const pixels = new Uint8ClampedArray(dim.width * dim.height * 4);
+		let i = 0,
+			x = 0,
+			y = 0;
+
+		// determine size of pixels in bytes
+		// TPC_TYPE_RGBA
+		let pixel_bytes = 4;
+		if (header.image_type == TPC_TYPE_RGB) {
+			pixel_bytes = 3;
+		} else if (header.image_type == TPC_TYPE_GREY) {
+			pixel_bytes = 1;
+		}
+
+		for (y = 0; y < dim.height; y++) {
+			for (x = 0; x < dim.width; x++, i += pixel_bytes) {
+				const pix_data_pos = (x + dim.width * y) * 4;
+				pixels[pix_data_pos + 0] = data[i + 0];
+				pixels[pix_data_pos + 1] =
+					pixel_bytes > 1 ? data[i + 1] : data[i + 0];
+				pixels[pix_data_pos + 2] =
+					pixel_bytes > 1 ? data[i + 2] : data[i + 0];
+				pixels[pix_data_pos + 3] = pixel_bytes > 3 ? data[i + 3] : 255;
+			}
+		}
+		//console.log(pixels);
+		return pixels;
+	}
+
+	parse(buffer: Buffer) {
+		// DXT Decoding library
+
+		// Parse-global variables,
+		// content is the bytes read from the file
+		// header is a structure containing the literal TPC header information,
+		//   in addition to various data derived from literal header data
+
+		//
+		// MAIN EXECUTION ENTRYPOINT FOR PARSE
+		//
+
+		const content = new Uint8Array(buffer);
+
+		// read TPC header
+		const header = this.header = this.headerRead(buffer);
+
+		// find TXI data
+		this.txiGetOffset(header, content);
+
+		// read TXI data
+		this.txiRead(header, buffer);
+
+		// parse TXI data for cubemaps and animated textures
+		this.txiParse(header);
+
+		// finish calculating dimensions based on parsed TXI values
+		this.headerFinalize(header);
+
+		// create the ranges for each frame & detail level in the source image data
+		const datamap = this.createRanges(header);
+
+		// structure for storing output image data
+		const rgbaFrames: any[] = [];
+
+		// read the image data into rgbaFrames structure
+		for (let frame_idx = 0; frame_idx < datamap.length; frame_idx++) {
+			console.log(`frame ${frame_idx}`);
+			rgbaFrames[frame_idx] = [];
+			for (
+				let mip_idx = 0;
+				mip_idx < datamap[frame_idx].length;
+				mip_idx++
+			) {
+				const range = datamap[frame_idx][mip_idx];
+				rgbaFrames[frame_idx][mip_idx] = this.tpcGetImageData(
+					header,
+					content.subarray(
+						SIZE_HEADER + range.start,
+						SIZE_HEADER + range.end
+					),
+					range
+				);
+			}
+		}
+
+		// structure for storing combined-frame, final image data
+		const mipmaps: any[] = [];
+
+		// lay out the final output image data according to specification
+		for (let mip_idx = 0; mip_idx < datamap[0].length; mip_idx++) {
+			// the trivial case, no layout necessary,
+			// just stuff frame[0] highest detail level into our output
+			mipmaps[mip_idx] = rgbaFrames[0][mip_idx];
+
+			const fw = Math.max(header.frame_width / Math.pow(2, mip_idx), 1);
+			const fh = Math.max(header.frame_height / Math.pow(2, mip_idx), 1);
+			console.log(`mipmap ${mip_idx} ${fw}x${fh}`);
+			if (header.frame_count > 1 && header.numX > 1) {
+				// multiple images per row, must use row-based approach
+				mipmaps[mip_idx] = new Uint8ClampedArray(
+					fw * fh * 4 * header.frame_count
+				);
+
+				for (let out_y = 0; out_y < fh * header.numY; out_y++) {
+					for (let out_x = 0; out_x < fw * header.numX; out_x += fw) {
+						// out_y is each row,
+						// out_x is each position in new image where a row should start,
+						// if numX == 2 & image width 512, out_y = 0, 256, 0, 256, ...
+						const frame_idx =
+							Math.floor(out_y / fh) * header.numX +
+							Math.floor(out_x / fw);
+						// byte offset for start of source row data
+						const ins_from = ((out_y % fh) * fw + (out_x % fw)) * 4;
+						const ins_from_end = ins_from + fw * 4;
+						// byte offset in final image for source row to be inserted at
+						const ins_at = (out_y * (fw * header.numX) + out_x) * 4;
+
+						mipmaps[mip_idx].set(
+							rgbaFrames[frame_idx][mip_idx].subarray(
+								ins_from,
+								ins_from + fw * 4
+							),
+							(out_y * fw * header.numX + out_x) * 4
+						);
+					}
+				}
+			} else if (header.frame_count > 1) {
+				// single images per byte region, use whole-image-based approach
+				mipmaps[mip_idx] = new Uint8ClampedArray(
+					fw * fh * 4 * header.frame_count
+				);
+				let ins_offset = 0;
+				for (let frame of rgbaFrames) {
+					(mipmaps[mip_idx] as any).set(frame[mip_idx], ins_offset);
+					ins_offset += frame[mip_idx].byteLength;
+				}
+			}
+			// construct preview canvas for this detail level
+			/*
+		const canvas = document.createElement('canvas');
+		canvas.width = fw * header.numX;
+		canvas.height = fh * header.numY;
+
+		const context = canvas.getContext( '2d' );
+		const imageData = context.createImageData( canvas.width, canvas.height );
+		imageData.data.set(mipmaps[mip_idx]);
+		context.putImageData(imageData, 0, 0 );
+		document.body.firstChild.appendChild(canvas);
+		*/
+		}
+
+		return {
+			// pixelData provided for legacy reasons, just highest detail level
+			pixelData: mipmaps[0],
+			// all detail levels
+			mipmaps,
+			// information that may be useful to external consumer of texture
+			header,
+			// header information broken out for legacy reasons
+			pixelDepth: header.pixel_size,
+			txiValue: header.txi_value
+		};
 	}
 }
