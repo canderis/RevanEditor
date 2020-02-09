@@ -1,6 +1,7 @@
-import { Component, OnInit, Input, ViewChild, ElementRef } from "@angular/core";
-import { TPCLoader, TPCTexture } from "../../../../../lotor/file-types/tpc";
+import { Component, OnInit, Input, ViewChild, ElementRef, AfterViewInit } from "@angular/core";
+
 import { KotorFile } from "../../../../../lotor/file-types/kotor-file";
+import { TPC } from "../../../../../lotor/file-types/tpc";
 
 
 @Component({
@@ -8,13 +9,17 @@ import { KotorFile } from "../../../../../lotor/file-types/kotor-file";
 	templateUrl: "./tpc-editor.component.html",
 	styleUrls: ["./tpc-editor.component.scss"]
 })
-export class TpcEditorComponent implements OnInit {
-	_file: KotorFile;
-	img: TPCTexture = null;
+export class TpcEditorComponent implements OnInit, AfterViewInit {
+	_file: TPC;
 	@ViewChild("previewArea", { static: false }) previewArea: ElementRef;
 
-	@Input() set file(file: KotorFile) {
+	@Input() set file(file: TPC) {
 		this._file = file;
+
+		console.log(this._file);
+		file.open();
+		this.previewArea?.nativeElement.removeChild(this.previewArea.nativeElement.firstChild);
+		this.previewArea?.nativeElement.appendChild(this.file.texture.image);
 
 		// const buffer = this._file.extract();
 		// if (this._file.fileExtension === "tpc") {
@@ -45,7 +50,18 @@ export class TpcEditorComponent implements OnInit {
 
 		// }
 	};
+
+	get file() {
+		return this._file;
+	}
+
 	constructor() {}
 
 	ngOnInit() {}
+
+	ngAfterViewInit() {
+		if(this.file.texture) {
+			this.previewArea.nativeElement.appendChild(this.file.texture.image);
+		}
+	}
 }
