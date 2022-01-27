@@ -73,7 +73,7 @@
     "angular-split": "^3.0.2",
     "decode-dxt": "^1.0.1",
     "jexcel": "^3.8.2",
-    "three": "^0.113.2",
+    "three": "^0.137.0",
     "tslib": "^1.10.0"
   }
 }
